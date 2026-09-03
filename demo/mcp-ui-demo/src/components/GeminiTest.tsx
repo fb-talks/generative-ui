@@ -245,20 +245,6 @@ export function GeminiTest() {
         transition: "background-color .25s ease",
       }}
     >
-      <a
-        href="/?proxytest"
-        style={{
-          position: "fixed",
-          top: 10,
-          right: 12,
-          zIndex: 10,
-          fontSize: "13px",
-          color: "#007bff",
-          textDecoration: "none",
-        }}
-      >
-        Proxy test →
-      </a>
       {/* LEFT COLUMN: API Key + Chat */}
       <div
         style={{
