@@ -1,0 +1,14 @@
+{
+  "name": "mcp-ui-talk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "fb-slides dev",
+    "build": "fb-slides build",
+    "preview": "fb-slides preview"
+  },
+  "devDependencies": {
+    "fb-slides": "^0.3.0"
+  }
+}

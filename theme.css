@@ -1,0 +1,14 @@
+/* Loaded after the package's theme.base.css — an override, not a replacement.
+   Redefining a token here reskins the whole deck. Delete this file if the
+   default dark theme is fine as it is. */
+
+/*
+:root {
+  --bg: #0e1116;
+  --card: #1a1f27;
+  --text: #e8ebf0;
+  --muted: #97a1b0;
+  --accent: #6ea8fe;
+  --accent-2: #7ee2b8;
+}
+*/

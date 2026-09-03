@@ -1,0 +1,186 @@
+<style>
+  html,
+  body {
+    margin: 0;
+    height: 100%;
+  }
+
+  .wt-root {
+    box-sizing: border-box;
+    height: 100%;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #10233a;
+    /* A solid background + border makes the real size of the widget visible
+       when the host resizes it (see "Resize Widget") */
+    background: linear-gradient(160deg, #e8f2ff 0%, #cfe4ff 100%);
+    border: 3px dashed #007bff;
+    border-radius: 10px;
+  }
+
+  .wt-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #4a6a8a;
+  }
+
+  .wt-city {
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .wt-temp {
+    font-size: 46px;
+    font-weight: 800;
+    line-height: 1;
+    color: #0056b3;
+  }
+
+  .wt-cond {
+    font-size: 14px;
+    color: #44607f;
+  }
+
+  .wt-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: auto;
+  }
+
+  .wt-actions button {
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 12px;
+    border: 1px solid #007bff;
+    border-radius: 6px;
+    background: #fff;
+    color: #0056b3;
+    cursor: pointer;
+  }
+
+  .wt-actions button:hover {
+    background: #f2f8ff;
+  }
+
+  .wt-size {
+    font-size: 12px;
+    color: #44607f;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+
+<div class="wt-root" id="wt-root">
+  <div>
+    <div class="wt-title">Weather Tool</div>
+    <div class="wt-city" id="wt-city">Waiting for data…</div>
+  </div>
+
+  <div>
+    <div class="wt-temp" id="wt-temp">--°</div>
+    <div class="wt-cond" id="wt-cond"></div>
+  </div>
+
+  <div class="wt-actions">
+    <button onclick="sendSizeChange()" class="secondary">📐 Resize Widget</button>
+    <button onclick="sendCustomMessage()" class="secondary">💬 Send Message</button>
+  </div>
+
+  <div class="wt-size" id="wt-size"></div>
+</div>
+
+<script type="module">
+  // Native MCP Apps protocol: the App class does the ui/initialize handshake
+  // and exposes typed helpers (sendMessage, sendSizeChanged, ...).
+  import { App } from "http://localhost:3010/ext-apps.js";
+
+  // autoResize (on by default) would measure the content and override the
+  // sizes this widget asks for on purpose — turn it off, we drive the size.
+  const app = new App({ name: "weather-widget", version: "1.0.0" }, {}, { autoResize: false });
+
+  let city = null;
+
+  function sendMessage(text) {
+    app.sendMessage({
+      role: "user",
+      content: [{ type: "text", text: text }],
+    });
+  }
+
+  // Cycle through a few fixed sizes so every click is a visible change
+  const SIZES = [
+    { width: 360, height: 260 },
+    { width: 560, height: 380 },
+    { width: 820, height: 520 },
+  ];
+  // Start on the size announced at mount (SIZES[1]) so the first click on
+  // "Resize Widget" is a visible change.
+  let sizeIndex = 2;
+
+  function sendSizeChange() {
+    const size = SIZES[sizeIndex % SIZES.length];
+    sizeIndex++;
+    app.sendSizeChanged({ width: size.width, height: size.height });
+    showSize(size);
+  }
+
+  function sendCustomMessage() {
+    sendMessage(city
+      ? `Hello from the Weather Tool! Currently showing ${city}.`
+      : "Hello from the Weather Tool!");
+  }
+
+  function showSize(requested) {
+    document.getElementById("wt-size").textContent =
+      `requested ${requested.width}x${requested.height} · actual ` +
+      `${Math.round(window.innerWidth)}x${Math.round(window.innerHeight)}`;
+  }
+
+  // Keep the "actual" figure honest while the host animates the container
+  window.addEventListener("resize", () => {
+    const el = document.getElementById("wt-size");
+    if (!el.textContent) return;
+    const requested = SIZES[(sizeIndex + SIZES.length - 1) % SIZES.length];
+    showSize(requested);
+  });
+
+  function render(data, toolInput) {
+    city = data.location || toolInput?.location || null;
+    document.getElementById("wt-city").textContent = city || "Unknown location";
+    if (typeof data.temperature === "number") {
+      document.getElementById("wt-temp").textContent =
+        `${data.temperature}${data.unit || "°"}`;
+    }
+    document.getElementById("wt-cond").textContent = data.condition || "";
+  }
+
+  // The host delivers the tool data as two notifications: the input the
+  // model chose (ui/notifications/tool-input) and the tool result
+  // (ui/notifications/tool-result).
+  let lastInput = null;
+  app.ontoolinput = ({ arguments: args }) => {
+    lastInput = args || null;
+  };
+  app.ontoolresult = (result) => {
+    if (result?.isError) {
+      document.getElementById("wt-city").textContent =
+        "Could not load the weather.";
+      return;
+    }
+    render(result?.structuredContent || {}, lastInput);
+  };
+
+  // Inline onclick handlers live in the global scope; a module's scope is
+  // private, so expose the two button actions explicitly.
+  window.sendSizeChange = sendSizeChange;
+  window.sendCustomMessage = sendCustomMessage;
+
+  // Handshake ui/initialize (callbacks are registered above), then ask the
+  // host for a comfortable size.
+  await app.connect();
+  app.sendSizeChanged({ width: SIZES[1].width, height: SIZES[1].height });
+</script>

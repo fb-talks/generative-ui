@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.angular/
+.DS_Store
+
+# PromptOps context snapshot
+.promptops/
+
+# PromptOps session assets
+.promptops-assets/

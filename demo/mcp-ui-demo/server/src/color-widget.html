@@ -1,0 +1,128 @@
+<style>
+  html, body { margin: 0; height: 100%; }
+
+  .cp-root {
+    box-sizing: border-box;
+    height: 100%;
+    font-family: system-ui, -apple-system, sans-serif;
+    padding: 14px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    color: #333;
+  }
+
+  .cp-title { font-weight: bold; margin-bottom: 10px; }
+
+  .cp-row { display: flex; align-items: center; gap: 12px; }
+
+  #colorPicker {
+    width: 80px; height: 44px; cursor: pointer;
+    border: 1px solid #ccc; border-radius: 4px; padding: 0;
+  }
+
+  .cp-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .cp-swatch {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid rgba(0,0,0,.2); cursor: pointer; padding: 0;
+  }
+
+  .cp-status { margin-top: 12px; font-size: 13px; color: #666; min-height: 18px; }
+  .cp-status.is-ok { color: #1a7f37; }
+  .cp-status.is-err { color: #c00; }
+</style>
+
+<div class="cp-root">
+  <div class="cp-title">Site background color</div>
+
+  <div class="cp-row">
+    <input type="color" id="colorPicker" value="#ffffff" />
+    <div class="cp-swatches" id="swatches"></div>
+  </div>
+
+  <div class="cp-status" id="status">Pick a color: it is applied to the host app background.</div>
+</div>
+
+<script type="module">
+  // ---------------------------------------------------------------------------
+  // Widget -> host app communication over the native MCP Apps protocol.
+  // The App class does the handshake and the JSON-RPC plumbing; the host
+  // (AppRenderer) forwards unknown methods to its `onFallbackRequest`
+  // handler, so we use a custom method to drive the host UI directly,
+  // and await its response.
+  // ---------------------------------------------------------------------------
+  import { App } from "http://localhost:3010/ext-apps.js";
+
+  const SET_BG_METHOD = "x/host/set-background-color";
+
+  const picker = document.getElementById("colorPicker");
+  const status = document.getElementById("status");
+
+  const app = new App({ name: "color-widget", version: "1.0.0" });
+
+  // Pass-through result schema for custom methods (zod-compatible shape):
+  // the host decides the payload, we take it as-is.
+  const AnyResult = { safeParse: (value) => ({ success: true, data: value }) };
+
+  function applyInitial(initial) {
+    if (!initial) return;
+    picker.value = normalize(initial);
+    applyColor(picker.value); // apply the color the model suggested right away
+  }
+
+  app.ontoolinput = ({ arguments: args }) => applyInitial(args?.initialColor);
+  app.ontoolresult = (result) => applyInitial(result?.structuredContent?.initialColor);
+
+  function normalize(color) {
+    const c = String(color).trim();
+    return /^#[0-9a-fA-F]{6}$/.test(c) ? c.toLowerCase() : "#ffffff";
+  }
+
+  function callHost(method, params) {
+    return app.request({ method, params }, AnyResult, { timeout: 5000 });
+  }
+
+  function notifyModel(color) {
+    // Keeps the conversation in sync with what the user did in the widget
+    app.sendMessage({
+      role: "user",
+      content: [{ type: "text", text: "Background color changed to " + color }],
+    });
+  }
+
+  async function applyColor(color) {
+    status.className = "cp-status";
+    status.textContent = "Applying " + color + "…";
+    try {
+      await callHost(SET_BG_METHOD, { color });
+      status.className = "cp-status is-ok";
+      status.textContent = "Host background set to " + color;
+    } catch (err) {
+      status.className = "cp-status is-err";
+      status.textContent = "Could not update the host: " + err.message;
+    }
+  }
+
+  picker.addEventListener("input", () => applyColor(picker.value));
+  picker.addEventListener("change", () => notifyModel(picker.value));
+
+  // Quick presets
+  ["#ffffff", "#0d1117", "#e3f2fd", "#fff3e0", "#e8f5e9", "#fce4ec"].forEach((c) => {
+    const b = document.createElement("button");
+    b.className = "cp-swatch";
+    b.style.background = c;
+    b.title = c;
+    b.addEventListener("click", () => {
+      picker.value = c;
+      applyColor(c);
+      notifyModel(c);
+    });
+    document.getElementById("swatches").appendChild(b);
+  });
+
+  // Handshake ui/initialize (callbacks are registered above). No manual
+  // size request: autoResize (default) measures the content and sends
+  // ui/notifications/size-changed for us.
+  await app.connect();
+</script>

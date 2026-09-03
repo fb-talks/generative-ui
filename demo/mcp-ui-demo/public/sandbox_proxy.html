@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Sandbox Proxy</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #widget-frame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <script>
+    // Sandbox proxy for MCP Apps.
+    //
+    // IMPORTANT: the widget HTML is rendered in a NESTED iframe (srcdoc)
+    // instead of document.write(). document.open() would wipe all window
+    // event listeners, so after the first widget this proxy would go deaf
+    // and later widgets could never be rendered. With a nested iframe the
+    // proxy's listener survives and simply swaps the widget on each
+    // "sandbox-resource-ready", relaying messages host <-> widget.
+
+    let inner = null;
+    let innerReady = false;
+    let queue = [];
+
+    // The host sends tool-input / tool-result BEFORE the HTML of the widget
+    // they belong to, so a freshly swapped widget would never see its own
+    // data. Keep the latest value of each of these notifications and replay
+    // them as soon as the new widget has loaded.
+    const REPLAYABLE = new Set([
+      "ui/notifications/tool-input",
+      "ui/notifications/tool-input-partial",
+      "ui/notifications/tool-result",
+      "ui/notifications/host-context-changed",
+    ]);
+    const lastState = new Map();
+
+    function toWidget(msg) {
+      inner.contentWindow.postMessage(msg, "*");
+    }
+
+    function renderWidget(html) {
+      if (inner) inner.remove();
+      innerReady = false;
+      queue = [];
+      inner = document.createElement("iframe");
+      inner.id = "widget-frame";
+      inner.addEventListener("load", () => {
+        innerReady = true;
+        lastState.forEach(toWidget);
+        queue.forEach(toWidget);
+        queue = [];
+      });
+      inner.srcdoc = html;
+      document.body.appendChild(inner);
+    }
+
+    window.addEventListener("message", (event) => {
+      const data = event.data;
+      if (!data || typeof data !== "object") return;
+
+      // From the host: handle here or relay down to the widget
+      if (event.source === window.parent) {
+        if (data.method === "ui/notifications/sandbox-resource-ready") {
+          const { html } = data.params || {};
+          if (html) renderWidget(html);
+          return;
+        }
+        if (data.method && REPLAYABLE.has(data.method)) {
+          lastState.set(data.method, data);
+          if (inner && innerReady) toWidget(data);
+          return;
+        }
+        if (inner && innerReady) {
+          toWidget(data);
+        } else {
+          queue.push(data);
+        }
+        return;
+      }
+
+      // Anything else comes from the widget iframe: relay it up to the host.
+      // Do NOT test `event.source === inner.contentWindow` here: for a
+      // same-origin srcdoc child Chrome may hand out a different WindowProxy
+      // object, and the comparison would silently drop every widget message.
+      window.parent.postMessage(data, "*");
+    });
+
+    // Signal that the sandbox proxy is ready
+    window.parent.postMessage(
+      {
+        method: "ui/notifications/sandbox-proxy-ready",
+        params: {},
+      },
+      "*",
+    );
+  </script>
+</body>
+
+</html>

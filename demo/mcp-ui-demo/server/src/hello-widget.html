@@ -1,0 +1,49 @@
+<style>
+  html, body { margin: 0; height: 100%; }
+
+  .hw-root {
+    box-sizing: border-box;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    color: #333;
+  }
+
+  .hw-title { font-size: 28px; font-weight: bold; }
+  .hw-sub { font-size: 13px; color: #666; }
+</style>
+
+<div class="hw-root">
+  <div class="hw-title" id="hw-title">Hello, world!</div>
+  <div class="hw-sub">Widget renderizzato dal server MCP — nessuna azione, solo display.</div>
+</div>
+
+<script type="module">
+  // Il widget piu' semplice possibile: legge i dati del tool e li mostra.
+  // Non chiama tool, non manda prompt, non pilota l'host.
+  // Protocollo MCP Apps nativo: la classe App gestisce handshake e messaggi.
+  import { App } from "http://localhost:3010/ext-apps.js";
+
+  const app = new App({ name: "hello-widget", version: "1.0.0" });
+
+  function greet(name) {
+    if (!name) return;
+    document.getElementById("hw-title").textContent = "Hello, " + name + "!";
+  }
+
+  // Input del tool (gli argomenti scelti dal modello)
+  app.ontoolinput = ({ arguments: args }) => greet(args?.name);
+  // Risultato del tool: lo structuredContent scritto dal server vince
+  app.ontoolresult = (result) => greet(result?.structuredContent?.name);
+
+  // Handshake ui/initialize: i callback vanno registrati PRIMA di connect(),
+  // da qui in poi e' l'host a mandare tool-input e tool-result.
+  await app.connect();
+</script>
