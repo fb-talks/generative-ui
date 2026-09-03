@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { AppRenderer } from "@mcp-ui/client";
 import { createMcpClient } from "../mcp-client";
+import styles from "./ProxyTest.module.css";
 
 // EXPERIMENT harness: exercises the sandbox proxy with sequential tool calls
 // WITHOUT Gemini (open the app with ?proxytest). Same rendering setup as
@@ -81,8 +82,8 @@ export function ProxyTest() {
   );
 
   return (
-    <div style={{ padding: 20, textAlign: "left", color: "#000" }}>
-      <h3 style={{ marginTop: 0 }}>Sandbox proxy test (no Gemini)</h3>
+    <div className={styles.page}>
+      <h3 className={styles.title}>Sandbox proxy test (no Gemini)</h3>
       <div id="status">
         {connectionError
           ? `MCP error: ${connectionError}`
@@ -90,7 +91,7 @@ export function ProxyTest() {
             ? "MCP connected"
             : "Connecting…"}
       </div>
-      <div style={{ margin: "12px 0", display: "flex", gap: 8 }}>
+      <div className={styles.toolbar}>
         {TOOL_CALLS.map((t) => (
           <button
             key={t.name}
@@ -104,15 +105,8 @@ export function ProxyTest() {
       </div>
       {toolData && client && (
         <div
-          style={{
-            position: "relative",
-            width: widgetSize.width,
-            maxWidth: "100%",
-            height: widgetSize.height,
-            border: "2px solid #007bff",
-            borderRadius: 6,
-            overflow: "hidden",
-          }}
+          className={styles.widgetBox}
+          style={{ width: widgetSize.width, height: widgetSize.height }}
         >
           <AppRenderer
             key={toolData.callId}
@@ -147,7 +141,7 @@ export function ProxyTest() {
           />
         </div>
       )}
-      <pre id="proxy-test-log" style={{ fontSize: 12, background: "#f5f5f5", padding: 8 }}>
+      <pre id="proxy-test-log" className={styles.log}>
         {log.join("\n")}
       </pre>
     </div>
