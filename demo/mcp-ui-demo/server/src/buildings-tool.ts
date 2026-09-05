@@ -49,13 +49,7 @@ export function registerBuildingsTool(server: McpServer) {
     server,
     "buildings_list_ui",
     buildingsUI.resource.uri,
-    {
-      _meta: {
-        ui: {
-          resourceUri: buildingsUI.resource.uri,
-        },
-      },
-    },
+    {},
     async () => ({
       contents: [buildingsUI.resource],
     }),

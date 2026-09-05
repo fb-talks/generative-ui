@@ -7,9 +7,9 @@ import "./App.css";
 
 // Simplest possible router: the hash picks the page, hashchange re-renders.
 const ROUTES: Record<string, { label: string; Page: ComponentType }> = {
-  "#/": { label: "Gemini Demo", Page: GeminiTest },
   "#/minimal": { label: "Minimal Tool", Page: MinimalTool },
   "#/proxy": { label: "Proxy Test", Page: ProxyTest },
+  "#/": { label: "Gemini Demo", Page: GeminiTest },
 };
 
 function App() {

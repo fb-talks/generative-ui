@@ -33,13 +33,7 @@ export function registerWeatherTool(server: McpServer) {
     server,
     "weather_dashboard_ui2",
     weatherDashboardUI.resource.uri,
-    {
-      _meta: {
-        ui: {
-          resourceUri: weatherDashboardUI.resource.uri,
-        },
-      },
-    },
+    {},
     async () => ({
       contents: [weatherDashboardUI.resource],
     }),
@@ -48,7 +42,7 @@ export function registerWeatherTool(server: McpServer) {
   // Register the tool with _meta linking to the UI resource
   registerAppTool(
     server,
-    "weather_dashboard223",
+    "weather",
     {
       description: "Interactive weather dashboard widget. Only work with Rome",
       inputSchema: {

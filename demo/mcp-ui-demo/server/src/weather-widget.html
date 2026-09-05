@@ -162,17 +162,17 @@
   // model chose (ui/notifications/tool-input) and the tool result
   // (ui/notifications/tool-result).
   let lastInput = null;
-  app.ontoolinput = ({ arguments: args }) => {
-    lastInput = args || null;
-  };
-  app.ontoolresult = (result) => {
+  app.addEventListener("toolinput", (input) => {
+    lastInput = input?.arguments || null;
+  });
+  app.addEventListener("toolresult", (result) => {
     if (result?.isError) {
       document.getElementById("wt-city").textContent =
         "Could not load the weather.";
       return;
     }
     render(result?.structuredContent || {}, lastInput);
-  };
+  });
 
   // Inline onclick handlers live in the global scope; a module's scope is
   // private, so expose the two button actions explicitly.

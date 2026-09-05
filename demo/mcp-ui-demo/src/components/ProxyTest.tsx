@@ -13,7 +13,7 @@ const DEFAULT_WIDGET_SIZE = { width: 560, height: 400 };
 
 const TOOL_CALLS: { label: string; name: string; input: any }[] = [
   { label: "Hello", name: "hello_world", input: { name: "Fabio" } },
-  { label: "Weather", name: "weather_dashboard223", input: { location: "Rome" } },
+  { label: "Weather", name: "weather", input: { location: "Rome" } },
   { label: "Color", name: "color_picker", input: { initialColor: "#3366ff" } },
   { label: "Buildings", name: "buildings_list", input: { city: "Roma" } },
 ];
@@ -52,7 +52,7 @@ export function ProxyTest() {
         setConnectionError(String(err));
       });
     const closeClient = () => {
-      currentClient?.close().catch(() => {});
+      currentClient?.close().catch(() => { });
       currentClient = null;
     };
     window.addEventListener("pagehide", closeClient);

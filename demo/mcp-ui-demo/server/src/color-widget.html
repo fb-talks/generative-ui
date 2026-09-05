@@ -71,8 +71,8 @@
     applyColor(picker.value); // apply the color the model suggested right away
   }
 
-  app.ontoolinput = ({ arguments: args }) => applyInitial(args?.initialColor);
-  app.ontoolresult = (result) => applyInitial(result?.structuredContent?.initialColor);
+  app.addEventListener("toolinput", (input) => applyInitial(input?.arguments?.initialColor));
+  app.addEventListener("toolresult", (result) => applyInitial(result?.structuredContent?.initialColor));
 
   function normalize(color) {
     const c = String(color).trim();
