@@ -32,13 +32,7 @@ export function registerColorTool(server: McpServer) {
     server,
     "color_picker_ui",
     colorUI.resource.uri,
-    {
-      _meta: {
-        ui: {
-          resourceUri: colorUI.resource.uri,
-        },
-      },
-    },
+    {},
     async () => ({
       contents: [colorUI.resource],
     }),

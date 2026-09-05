@@ -35,10 +35,16 @@ export function GeminiTest() {
   const [tools, setTools] = useState<any[]>([]);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [toolData, setToolData] = useState<{
+    callId: number;
     name: string;
     input: any;
     result?: any;
   } | null>(null);
+  // EXPERIMENT: one AppRenderer instance per tool call. callId keys the
+  // AppRenderer so every call remounts it with a fresh sandbox iframe and a
+  // fresh handshake (the simple document.write proxy renders one widget per
+  // iframe instance). The result update reuses the same callId: no remount.
+  const callIdRef = useRef(0);
   // Size of the widget container: the widget asks for it via
   // ui/notifications/size-changed and the host applies it for real.
   const [widgetSize, setWidgetSize] = useState(DEFAULT_WIDGET_SIZE);
@@ -137,11 +143,11 @@ export function GeminiTest() {
     setMessages((m) => [...m, { role: "user", text: userText }]);
     setPrompt("");
     setLoading(true);
-    // NOTE: do NOT reset toolData to null here. Unmounting the AppRenderer and
-    // remounting it later requires a new sandbox-iframe handshake, which Chrome
-    // fails after the first widget has been loaded (event.source no longer
-    // matches iframe.contentWindow). Keeping one AppRenderer alive and updating
-    // it via props avoids any re-handshake.
+    // EXPERIMENT: with key={callId} on the AppRenderer every tool call now
+    // remounts it deliberately (fresh sandbox iframe + fresh handshake).
+    // The original design kept one AppRenderer alive because a remount
+    // handshake used to fail in Chrome (event.source no longer matched
+    // iframe.contentWindow) — retesting that with the cross-origin proxy.
 
     try {
       const chat = getOrCreateChat()!;
@@ -160,7 +166,8 @@ export function GeminiTest() {
         const { name, args } = functionCall;
 
         // Show Tool UI with input
-        setToolData({ name, input: args });
+        const callId = ++callIdRef.current;
+        setToolData({ callId, name, input: args });
 
         // Execute Tool
         const toolResult = await client.callTool({
@@ -169,7 +176,7 @@ export function GeminiTest() {
         });
 
         // Update Tool UI with result
-        setToolData({ name, input: args, result: toolResult });
+        setToolData({ callId, name, input: args, result: toolResult });
 
         // Send result back to Gemini
         result = await chat.sendMessage({
@@ -424,6 +431,7 @@ export function GeminiTest() {
                 {widgetSize.width} x {widgetSize.height}
               </div>
               <AppRenderer
+                key={toolData.callId}
                 client={client}
                 toolName={toolData.name}
                 toolInput={toolData.input}

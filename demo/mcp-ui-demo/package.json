@@ -9,18 +9,21 @@
     "dev:all": "concurrently -n client,server -c cyan,magenta \"npm run dev\" \"npm run dev:server\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "inspector": "mcp-inspector",
+    "inspector:mcpjam": "inspector"
   },
   "dependencies": {
     "@google/genai": "^1.41.0",
     "@mcp-ui/client": "^7.1.1",
-    "@modelcontextprotocol/ext-apps": "^1.7.5",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@mcpjam/inspector": "^3.3.5",
+    "@modelcontextprotocol/inspector": "^2.5.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",

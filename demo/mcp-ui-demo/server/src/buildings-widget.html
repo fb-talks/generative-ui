@@ -210,10 +210,10 @@
   // model chose (ui/notifications/tool-input) and the tool result
   // (ui/notifications/tool-result).
   let lastFilters = null;
-  app.ontoolinput = ({ arguments: args }) => {
-    lastFilters = args || null;
-  };
-  app.ontoolresult = (result) => {
+  app.addEventListener("toolinput", (input) => {
+    lastFilters = input?.arguments || null;
+  });
+  app.addEventListener("toolresult", (result) => {
     const structured = result?.structuredContent;
 
     if (result?.isError) {
@@ -224,7 +224,7 @@
     if (!structured || !Array.isArray(structured.buildings)) return;
 
     render(structured.buildings, lastFilters);
-  };
+  });
 
   // Handshake ui/initialize (callbacks are registered above), then ask the
   // host for a comfortable size (a list needs more room than the color picker)

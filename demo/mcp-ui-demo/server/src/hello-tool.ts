@@ -28,18 +28,16 @@ export function registerHelloTool(server: McpServer) {
     },
   });
 
-  // Register the UI resource so the host can fetch it
+  // Register the UI resource so the host can fetch it.
+  // Il 4o argomento e' il _meta della risorsa: opzionale, e serve solo a CSP,
+  // permessi sandbox, dominio dedicato, bordo (McpUiResourceMeta). Il legame
+  // con il tool NON passa da qui: lo fa l'URI qui sopra piu'
+  // _meta.ui.resourceUri sul tool.
   registerAppResource(
     server,
     "hello_world_ui",
     helloUI.resource.uri,
-    {
-      _meta: {
-        ui: {
-          resourceUri: helloUI.resource.uri,
-        },
-      },
-    },
+    {},
     async () => ({
       contents: [helloUI.resource],
     }),

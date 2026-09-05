@@ -9,6 +9,6 @@
     "preview": "fb-slides preview"
   },
   "devDependencies": {
-    "fb-slides": "^0.3.0"
+    "fb-slides": "^0.4.2"
   }
 }

@@ -39,9 +39,9 @@
   }
 
   // Input del tool (gli argomenti scelti dal modello)
-  app.ontoolinput = ({ arguments: args }) => greet(args?.name);
+  app.addEventListener("toolinput", (input) => greet(input?.arguments?.name));
   // Risultato del tool: lo structuredContent scritto dal server vince
-  app.ontoolresult = (result) => greet(result?.structuredContent?.name);
+  app.addEventListener("toolresult", (result) => greet(result?.structuredContent?.name));
 
   // Handshake ui/initialize: i callback vanno registrati PRIMA di connect(),
   // da qui in poi e' l'host a mandare tool-input e tool-result.

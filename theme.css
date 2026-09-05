@@ -12,3 +12,200 @@
   --accent-2: #7ee2b8;
 }
 */
+
+/* --- the author slide ----------------------------------------------------- */
+/* Split in two, full-bleed: photo filling the left half, bio centred on the
+   right. Mirrors how `.demo-slide` claims the whole slide box. */
+
+.reveal .slides section.author-slide {
+  /* Reveal keeps a safe band around the 1280x720 slide box (`margin: 0.055`).
+     The photo bleeds through it with negative margins — `.reveal` is
+     `overflow: hidden`, so whatever spills past the viewport is clipped.
+     Sized with slack for 16:9 up to ~2:1 screens; overshooting only costs a
+     slightly tighter crop, never a visible seam. */
+  --bleed-y: 130px;
+  --bleed-x: 150px;
+  /* One knob for the whole slide: every size below is in `em`, so bumping this
+     scales the title, the bullets and the two muted lines together. */
+  font-size: 1.25em;
+
+  display: flex !important;
+  flex-direction: row;
+  align-items: stretch;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  gap: 3rem;
+}
+
+.reveal .slides section.author-slide .author-photo {
+  flex: 0 0 calc(40% + var(--bleed-x));
+  margin: calc(var(--bleed-y) * -1) 0 calc(var(--bleed-y) * -1) calc(var(--bleed-x) * -1);
+  position: relative;
+  overflow: hidden;
+
+  /* Carousel timing: how long a photo holds, and how long the cross-fade is. */
+  --hold: 3.5s;
+  --fade: 1.2s;
+  --slot: calc(var(--hold) + var(--fade));
+}
+
+/* The photos stack on top of each other and cross-fade in DOM order: each one
+   starts a slot after the one before, and its fade-in lands exactly on that
+   one's fade-out. The first photo fades in with the slide. */
+.reveal .slides section.author-slide .author-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 35%;
+  display: block;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  opacity: 0;
+  animation: none var(--slot) infinite;
+  animation-delay: calc(var(--i, 0) * var(--slot));
+}
+
+/* First one visible, so a single photo — or a count no block below handles —
+   still shows. A lone photo never animates: there is nothing to fade to. */
+.reveal .slides section.author-slide .author-photo img:first-child { opacity: 1; }
+
+
+/* The slot each photo sits in, shared by every count below. */
+.reveal .slides section.author-slide .author-photo img:nth-child(2) { --i: 1; }
+.reveal .slides section.author-slide .author-photo img:nth-child(3) { --i: 2; }
+.reveal .slides section.author-slide .author-photo img:nth-child(4) { --i: 3; }
+.reveal .slides section.author-slide .author-photo img:nth-child(5) { --i: 4; }
+.reveal .slides section.author-slide .author-photo img:nth-child(6) { --i: 5; }
+.reveal .slides section.author-slide .author-photo img:nth-child(7) { --i: 6; }
+.reveal .slides section.author-slide .author-photo img:nth-child(8) { --i: 7; }
+
+/* `:first-child:nth-last-child(N)` reads as "exactly N photos". The keyframe
+   percentages depend on N and have to be literals, hence one block per count.
+   A ninth photo needs one more block, copied from these.
+
+   `.present` is reveal's class for the slide on screen: the animation is only
+   attached while the slide is being shown, so every visit starts the sequence
+   from the first photo instead of dropping in mid-rotation. */
+
+@keyframes author-photo-2 {
+  0% { opacity: 0; }
+  12.766%, 50.000% { opacity: 1; }
+  62.766%, 100% { opacity: 0; }
+}
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(2),
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(2) ~ img {
+  animation-name: author-photo-2;
+  animation-duration: calc(2 * var(--slot));
+}
+
+@keyframes author-photo-3 {
+  0% { opacity: 0; }
+  8.511%, 33.333% { opacity: 1; }
+  41.844%, 100% { opacity: 0; }
+}
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(3),
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(3) ~ img {
+  animation-name: author-photo-3;
+  animation-duration: calc(3 * var(--slot));
+}
+
+@keyframes author-photo-4 {
+  0% { opacity: 0; }
+  6.383%, 25.000% { opacity: 1; }
+  31.383%, 100% { opacity: 0; }
+}
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(4),
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(4) ~ img {
+  animation-name: author-photo-4;
+  animation-duration: calc(4 * var(--slot));
+}
+
+@keyframes author-photo-5 {
+  0% { opacity: 0; }
+  5.106%, 20.000% { opacity: 1; }
+  25.106%, 100% { opacity: 0; }
+}
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(5),
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(5) ~ img {
+  animation-name: author-photo-5;
+  animation-duration: calc(5 * var(--slot));
+}
+
+@keyframes author-photo-6 {
+  0% { opacity: 0; }
+  4.255%, 16.667% { opacity: 1; }
+  20.922%, 100% { opacity: 0; }
+}
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(6),
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(6) ~ img {
+  animation-name: author-photo-6;
+  animation-duration: calc(6 * var(--slot));
+}
+
+@keyframes author-photo-7 {
+  0% { opacity: 0; }
+  3.647%, 14.286% { opacity: 1; }
+  17.933%, 100% { opacity: 0; }
+}
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(7),
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(7) ~ img {
+  animation-name: author-photo-7;
+  animation-duration: calc(7 * var(--slot));
+}
+
+@keyframes author-photo-8 {
+  0% { opacity: 0; }
+  3.191%, 12.500% { opacity: 1; }
+  15.691%, 100% { opacity: 0; }
+}
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(8),
+.reveal .slides section.author-slide.present .author-photo img:first-child:nth-last-child(8) ~ img {
+  animation-name: author-photo-8;
+  animation-duration: calc(8 * var(--slot));
+}
+
+.reveal .slides section.author-slide .author-bio {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 2rem;
+  min-width: 0;
+}
+.reveal .slides section.author-slide .author-bio > :last-child { margin-bottom: 0; }
+.reveal .slides section.author-slide h1 { margin: 0 0 1.4rem; }
+.reveal .slides section.author-slide ul { margin: 0; font-size: 0.8em; line-height: 1.75; }
+.reveal .slides section.author-slide .author-stack,
+.reveal .slides section.author-slide .author-meta {
+  color: var(--muted);
+  font-size: 0.58em;
+  line-height: 1.7;
+}
+.reveal .slides section.author-slide .author-stack { margin: 1.6rem 0 0; }
+.reveal .slides section.author-slide .author-meta { margin: 0.9rem 0 0; }
+
+/* The corner badge names the deck a slide belongs to. The speaker slide lives
+   inside another section, so the badge would name the wrong thing — hide it. */
+.reveal:has(section.present.author-slide) + #deck-badge { display: none; }
+
+/* An embedded mockup: the iframe fills the height the slide has left under the
+   heading — the mockup itself is taller than the frame and scrolls inside it. */
+.reveal .slides .mockup-frame {
+  display: flex;
+  justify-content: center;
+}
+.reveal .slides .mockup-frame iframe {
+  width: min(800px, 100%);
+  /* px, not vh: the slide is a fixed 960x700 box reveal scales as a whole, so a
+     viewport unit here would not stay inside it. */
+  height: 540px;
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  background: #fff;
+}
