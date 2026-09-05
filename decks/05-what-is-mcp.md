@@ -6,7 +6,7 @@ section: MCP
 
 # MCP
 
-**Model Context Protocol** — how a model reaches everything that is not in the chat.
+**Model Context Protocol** — the open standard that lets any AI app use *your* tools and *your* data.
 
 Note: five minutes, just enough to have the same words. Whoever already writes MCP servers can look at their phone.
 
@@ -65,8 +65,8 @@ M + N. Write the server **once**, every host that speaks MCP can use it.
 
 ```mermaid
 flowchart LR
-  H[Host] --> C1[Client] --> S1[Weather server]
-  H --> C2[Client] --> S2[Filesystem server]
+  H[Host] --> C1[Client] --> S1[Weather MCP]
+  H --> C2[Client] --> S2[Figma, GitHub, ... MCPS]
 ```
 
 Note: the distinction that matters for later — **the model never talks to the server**. The host does. The model only decides *what* to ask for, and it is the host that executes, or refuses.
@@ -78,27 +78,30 @@ Note: the distinction that matters for later — **the model never talks to the 
 | primitive | who decides to use it | example |
 | --- | --- | --- |
 | **Tools** | the **model**, on its own | `get_weather`, `create_issue` |
-| **Resources** | the **host / user** | a file, a record, `ui://…` |
+| **Resources** | the **host** — never the model | a file, a record, `ui://…` |
 | **Prompts** | the **user**, explicitly | a slash command, a template |
 
 Tools are the interesting part today — but keep **resources** in mind, they come back in ten minutes.
 
-Note: three primitives, three different owners. The confusion "resource = anything read-only" comes precisely from ignoring who pulls the trigger.
+Note: three primitives, three different owners. The confusion "resource = anything read-only" comes precisely from ignoring who pulls the trigger. On the middle row, say it out loud: a resource is fetched by the **host application** — either because the user picked it (attaching a file, an @-mention) or because the app's own logic went and got it. The model can never reach for one by itself. That second case is the one that matters today: the `ui://` widget is fetched by the host on its own, because the tool result points at it. Nobody clicks anything.
 
 ---
 
-## A tool, all of it
+## Register a Tool
 
-```ts [1-3|5-9|11-14]
+```ts [1-3|5-6|7-11]
 server.registerTool("get_weather", {
   description: "Current weather for a city",
   inputSchema: { city: z.string().describe("City name, e.g. 'Roma'") },
 },
-  async ({ city }) => ({
-    content: [
-      { type: "text", text: "Rome: 23°, clear sky" },
-    ],
-  }),
+  async ({ city }) => {
+    // async request here ...
+    return {
+      content: [
+        { type: "text", text: "Rome: 23°, clear sky" },
+      ],
+    };
+  },
 );
 ```
 
@@ -111,21 +114,19 @@ Note: no parsing, no intent matching, no routing. You declare the shape, the mod
 
 ## Transport
 
+How the host and the server talk. Two options:
+
 | | |
 | --- | --- |
-| **stdio** | the host spawns the server as a process — local, zero config |
-| **Streamable HTTP** | the server is a remote endpoint — one URL, auth, deployable |
+| **stdio** | the server runs on your machine, as a process |
+| **HTTP** | the server lives at a URL |
 
-The demo today runs on HTTP, `localhost:3010`, because the host is a browser app.
+Today: **HTTP**, on `localhost:3010`.
 
-Note: HTTP is the one that matters here — a widget in an iframe needs an origin, and stdio has none.
+Note: stdio is the local case — zero config, it is what Claude Desktop does. HTTP is the one that matters here: our host is a browser app, and a widget in an iframe needs an origin. A process has none.
 
 ---
 
 ## So then
 
 The server says what it can do. The model chooses. The host executes and gets back…
-
-# text
-
-Note: and this is exactly where the talk starts.

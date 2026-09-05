@@ -25,62 +25,7 @@ Note: same architecture every time. All that changes is how many channels we ope
 
 # 1 · hello_world
 
-The bare minimum: the full round trip, one direction only.
-
----
-
-## The tool
-
-```ts [1-2|4-8|10-16|17-21]
-const htmlPath = path.join(__dirname, "hello-widget.html");
-const htmlString = fs.readFileSync(htmlPath, "utf8");
-
-const helloUI = createUIResource({
-  uri: "ui://hello-server/hello-template",
-  encoding: "text",
-  content: { type: "rawHtml", htmlString },
-});
-
-registerAppTool(server, "hello_world", {
-  description: "Shows a minimal 'Hello world' widget…",
-  inputSchema: {
-    name: z.string().optional().describe("Name to greet, e.g. 'Fabio'"),
-  },
-  _meta: { ui: { resourceUri: helloUI.resource.uri } },
-},
-  async ({ name }) => ({
-    content: [{ type: "text", text: `Hello widget shown (${name}).` }],
-    structuredContent: { name: name || "world" },
-  }),
-);
-```
-
-Note: two results in one. `content` is for the model, `structuredContent` is for the widget. The model reads the sentence, the widget reads the object.
-
----
-
-## The widget
-
-```html [1-3|6|8-12|14-15]
-<div class="hw-root">
-  <div class="hw-title" id="hw-title">Hello, world!</div>
-</div>
-
-<script type="module">
-  import { App } from "http://localhost:3010/ext-apps.js";
-
-  const app = new App({ name: "hello-widget", version: "1.0.0" });
-  app.ontoolresult = (result) => {
-    const name = result.structuredContent?.name;
-    if (name) hwTitle.textContent = "Hello, " + name + "!";
-  };
-
-  // callbacks first, then the ui/initialize handshake
-  await app.connect();
-</script>
-```
-
-No actions, no buttons: **display only**.
+The bare minimum: the full round trip, one direction only. Tool, client, and widget were already shown in the previous section — just the live demo here.
 
 ---
 
@@ -278,12 +223,12 @@ inputSchema: {
 
 ```js
 // in the widget
-app.ontoolinput = ({ arguments: args }) => {
-  if (args?.initialColor) {
-    picker.value = normalize(args.initialColor);
+app.addEventListener("toolinput", (input) => {
+  if (input?.arguments?.initialColor) {
+    picker.value = normalize(input.arguments.initialColor);
     applyColor(picker.value);   // applied immediately
   }
-};
+});
 ```
 
 > "I want a blue background" → the picker opens **already** on `#0000ff`, colour already applied.
