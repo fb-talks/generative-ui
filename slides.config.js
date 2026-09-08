@@ -1,6 +1,6 @@
 // Everything here is optional: delete the file and the defaults below apply.
 export default {
-  title: 'MCP UI',
+  title: 'Generative UI',
   lang: 'en',
 
   // Where the talk lives. Every .md in here becomes slides, in file-name order.
@@ -28,10 +28,25 @@ export default {
       name: 'mcp-ui-demo',
       cwd: 'demo/mcp-ui-demo',
       command: 'npm',
-      args: ['run', 'dev'],
+      args: ['run', 'dev', '--', '--port', '5173', '--strictPort'],
       url: 'http://localhost:5173/',
     },
+    // The generative-UI playground (Gemini + React). Tab 3 is function calling.
+    {
+      name: 'genui-demo',
+      cwd: 'demo/genui-demo',
+      command: 'npm',
+      args: ['run', 'dev', '--', '--port', '5174', '--strictPort'],
+      url: 'http://localhost:5174/tools',
+    },
   ],
+
+  // A `source ↗` button on every demo slide: `code serve-web` alongside the deck,
+  // on port 7100, opening that demo's folder in real VS Code in a new tab. The
+  // absolute path rather than `true`: the shell this is started from has no
+  // /usr/local/bin in its PATH, and a bare `code` is not found there.
+  // `--no-editor` turns it off for one run.
+  editor: { command: '/usr/local/bin/code' },
 
   // The corner signature.
   signature: { name: 'www.fabiobiondi.dev', url: 'https://www.fabiobiondi.dev', logo: 'assets/jshd-sticker.png' },

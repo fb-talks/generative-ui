@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "fb-slides dev",
     "build": "fb-slides build",
-    "preview": "fb-slides preview"
+    "preview": "fb-slides preview",
+    "kill": "fb-slides kill"
   },
   "devDependencies": {
-    "fb-slides": "^0.4.2"
+    "fb-slides": "^0.10.0"
   }
 }

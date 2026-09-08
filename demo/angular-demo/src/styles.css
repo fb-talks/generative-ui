@@ -1,0 +1,8 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* The deck embeds this app in an iframe whose element background is the dark
+   theme colour. A document with no background of its own is transparent inside
+   an iframe, so it would show through — standalone the browser paints white. */
+html {
+  background: #fff;
+}
