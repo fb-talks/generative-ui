@@ -37,7 +37,6 @@ export default function ToolsDemo() {
         'the disk is almost full',
         'how much did we sell in 2024?',
         'compare 2023 and 2024 sales for shoes',
-        'compare the npm downloads of React, Angular and Vue',
       ]}
       run={async (prompt, apiKey) => {
         const specs = await generateUI(prompt, apiKey);

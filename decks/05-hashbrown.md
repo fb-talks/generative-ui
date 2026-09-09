@@ -18,7 +18,7 @@ Note: this is the other half of the "two places the UI can come from" slide. MCP
 
 ## What it is
 
-- A **client-side** framework for Angular and React — the agent loop runs in the browser
+- A **client-side** framework for Angular and React: the agent loop runs in the browser
 - The model does not emit HTML: it picks from a **catalog of your components** and fills their inputs
 - Provider-agnostic: OpenAI, Google, Anthropic, Writer, Ollama, Azure
 - Streaming-first, signal-based on the Angular side
@@ -36,7 +36,7 @@ Note: thirty seconds, then move on. One input, no filters — the model picks th
 
 ---
 
-## The mental model: `httpResource`
+## Angular mental model with Signals & `httpResource`
 
 <div style="display: flex; gap: 2rem; align-items: flex-start;">
 <div style="flex: 0.85; min-width: 0;">
@@ -105,9 +105,9 @@ export class App {
       ... instructions here ...
     `,
     components: [
-      Component1,
-      Component2,
-      Component3,
+      Component1Declaration,
+      Component2Declaration,
+      Component3Declaration,
     ],
   });
 }
@@ -120,12 +120,9 @@ Note: one object, four keys that matter. `model` is a string — swapping provid
 ## Sending a message
 
 ```ts
-chat.sendMessage({ role: 'user', content: 'USER MESSAGE' })
-```
-
-```ts
 chat.sendMessage({
-  role: 'user', content: 'Are there available properties in Roma?'
+  role: 'user', 
+  content: 'Are there available properties in Roma?'
 })
 ```
 
@@ -182,9 +179,9 @@ Note: this is the security story in one line. There is no "render anything" esca
 
 ---
 
-## `exposeComponent` #1 — a plain component
+## `exposeComponent` #1: a plain component
 
-<div style="font-size: 0.8em; opacity: 0.75; margin: 0 0 0.4em;">An ordinary Angular component — nothing AI about it</div>
+<div style="font-size: 0.8em; opacity: 0.75; margin: 0 0 0.4em;">An ordinary Angular component: nothing AI about it</div>
 
 ```ts [1-9]
 @Component({
@@ -200,12 +197,14 @@ export class SimpleMessage {
 
 <div style="font-size: 0.8em; opacity: 0.75; margin: 0 0 0.4em;">The description the model reads</div>
 
-```ts [1-9|6]
+```ts [1-11|6|8]
 export const uiSimpleMessageComponent = exposeComponent(
   SimpleMessage,
   {
     description: `Display a simple text response to the user`,
     input: {
+      text: s.string('The msg to display'),
+      // or 
       text: s.streaming.string('The msg to display'),
     },
   },
@@ -216,7 +215,7 @@ Note: on top, an ordinary Angular component — nothing AI about it, it existed 
 
 ---
 
-## `exposeComponent` #2 — typed inputs
+## `exposeComponent` #2: A Map component
 
 ```ts [5-8]
 export const uiLeafletComponent = exposeComponent(
@@ -236,8 +235,7 @@ Every field carries a **description** — that string is the only documentation 
 Note: this is the part people underestimate. The schema is not validation, it is the prompt. "The zoom level of the map" is what makes the model pick 13 for a street and 6 for a region. Write these like docs, not like types.
 
 ---
-
-## Nested schemas
+## `exposeComponent` #3: Nested schemas
 
 <div style="display: flex; gap: 1.5rem; align-items: flex-start; font-size: 0.8em;">
 <div style="flex: 1; min-width: 0;">
@@ -296,6 +294,28 @@ Note: note the `@empty` block. Every exposed component must render half-empty an
 
 ## Streaming changes the UX more than you expect
 
+<div class="cols">
+<div class="col">
+
+
+```ts 
+text: s.string('The description of the product'),
+```
+
+</div>
+
+<div class="col">
+
+
+```ts 
+text: s.streaming.string('The description of the product'),
+```
+
+</div>
+</div>
+
+
+
 <div style="display: flex; gap: 2.5rem;">
   <div style="flex: 1;">
     <p><strong>Without streaming</strong></p>
@@ -315,7 +335,7 @@ Note: note the `@empty` block. Every exposed component must render half-empty an
   </div>
 </div>
 
-<p class="fragment">The tree arrives <b>partial</b>. Your components must survive being rendered with half their inputs — skeletons, optional props, no crashes on <code>undefined</code>.</p>
+<p class="fragment">The tree arrives <b>partial</b>. <br /> Your components must survive being rendered with half their inputs:<br /> skeletons, optional props, no crashes on <code>undefined</code>.</p>
 
 <p class="fragment">That is what <code>s.streaming.string</code> and the <code>@empty</code> block on the previous slide are for.</p>
 
@@ -548,6 +568,7 @@ Note: same clip, now that every piece has a name. Point at them as they appear: 
 | **server** | a streaming proxy, ~20 lines |
 | **trust boundary** | none crossed — it is all your code |
 
-<p class="fragment">The remote case — a <b>third party</b> shipping data <i>and</i> UI — is the other half: <b>MCP UI / MCP Apps</b>.</p>
 
-Note: closing frame. Hashbrown is the answer when you own every component on screen. The moment the UI comes from someone else's server, you need isolation and consent as a protocol — and that is exactly what the rest of the talk is about.
+> Hashbrown is the answer _when you own every component on screen_. <br />
+The moment the UI comes from someone else's server, you need isolation and consent as a protocol. <br/>
+And that is exactly what the rest of the talk is about.

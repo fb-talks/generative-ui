@@ -37,7 +37,7 @@ Same question every time: *"who was Ada Lovelace?"*
 **3. Call your functions**: "tools". You describe what your app can do; the model decides *when* to call it. Your code still runs the logic.
 
 ```ts
-tools: [ fetchSales, findPerson, createTicket ]
+tools: [ getSales, findPerson, createTicket ]
 ```
 
 <p class="fragment">Generative UI = <b>#2 + #3</b>, pointed at your component library instead of your database.</p>
@@ -62,10 +62,10 @@ sequenceDiagram
     participant M as Model
     participant S as Your Services
 
-    U->>A: "how are the running shoes doing?"
+    U->>A: "how are the Product X doing?"
     A->>M: prompt + tool list + component catalog
-    M->>A: tool call: getSales('running shoes')
-    A->>S: getSales('running shoes')
+    M->>A: tool call: getSales('product X')
+    A->>S: getSales('product X')
     S-->>A: data
     A->>M: tool result
     M-->>A: UI description (JSON)
@@ -73,7 +73,7 @@ sequenceDiagram
     A-->>U: a chart, product cards, a form
 ```
 
-Note what never happens: the model never touches the DOM, the network, or your state.
+The model never touches the DOM, the network, or your state.
 
 Note: walk it slowly, arrow by arrow. The two things to point at: step 2 (we send a *catalog*, not a design) and step 7 (JSON, not markup).
 
@@ -82,7 +82,7 @@ Note: walk it slowly, arrow by arrow. The two things to point at: step 2 (we sen
 ## Start from the components you already have
 
 ```tsx
-// everything it renders arrives in its props
+// A simple card with name, role and a list of skills
 export type UserCardProps = { name: string; role: string; skills: string[] };
 
 export function UserCard({ name, role, skills }: UserCardProps) {
@@ -103,7 +103,9 @@ export function UserCard({ name, role, skills }: UserCardProps) {
 <UserCard name="Valentino Rossi" role="Rider" skills={['MotoGP', 'GT racing', 'VR46']} />
 ```
 
-No AI import, no base class, no decorator. A component you wrote months ago, styled and tested before any model existed — and **that line is one you wrote by hand**, in a page you designed.
+No AI import, no base class, no decorator. 
+
+A component you wrote months ago, styled and tested before any model existed.
 
 Note: start here on purpose — the room needs to see that nothing about this component is special before I claim a model can assemble it. No decorator, no base class, no `data` envelope: it is the same `UserCard` that is already in your design system, and it was written, reviewed and tested long before any of this.
 
@@ -134,15 +136,38 @@ const tools: FunctionDeclaration[] = [
 ];
 ```
 
-<p class="fragment">Here the schema is simply <code>UserCardProps</code> (see previous slide).</p>
-
 > The `description` is the only manual the model gets: the schema can enforce that `name` is a string.
+
+
+<blockquote class="fragment">The <code>parameters</code> schema is simply <code>UserCardProps</code> (see previous slide).</blockquote>
+
 
 
 
 Note: walk the three steps of the highlight: the name is the one the model will call back, the description is how it decides, the schema is what it is allowed to send. Nothing here is framework magic — it is a plain object literal that happens to be shipped to a model.
 
 The fragment is the reason `UserCard` came first: schema and props are the same three fields, so the declaration reads like the TypeScript type written twice. Every generative-UI tutorial you will find stops here. Say that out loud, then turn the page — because the interesting component is the one that does *not* work like this.
+
+
+---
+
+## What comes back
+
+Prompt: _Who was Ada Lovelace?_
+
+```json
+[
+  { 
+    "component": "UserCard",
+    "props": {
+       "name": "Ada Lovelace", 
+       "role": "Mathematician",
+       "skills": ["Analytical Engine", "Algorithms", "Symbolic logic"] 
+    } 
+  }
+]
+```
+
 
 ---
 
@@ -162,7 +187,14 @@ export async function SalesReport({ year, category = 'all' }: SalesReportProps) 
 }
 ```
 
-Six lines, and none of them look like AI. 
+```tsx
+// Usage
+<SalesReport year={2025} category="shoes" />
+```
+
+
+
+
 
 Note: this is the component the room will remember, so slow down. `UserCard` was handed everything it renders; this one is handed two values and goes to get the rest.
 
@@ -174,23 +206,26 @@ The reason this matters is not architecture, it is trust. The model has no idea 
 
 ## A tool that describes the question, not the data
 
-```ts [2|3-7|8-15]
-{
-  name: 'SalesReport',
-  description:
-    'Total sales / revenue for one calendar year, broken down by month. Use it whenever ' +
-    'the user asks about sales, revenue or turnover of a given year. Send ONLY the year ' +
-    '(and the category, if the user named one): the component queries the database ' +
-    'itself. Never put sales figures in a BarChart — you do not have them.',
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      year: { type: Type.NUMBER, description: 'The calendar year, e.g. 2024' },
-      category: { type: Type.STRING, enum: ['all', 'shoes', 'clothing', 'accessories'] },
+```ts [1-2|4|5-10|11-18]
+const tools: FunctionDeclaration[] = [
+  // ... other tools
+  {
+    name: 'SalesReport',
+    description: `
+      Total sales / revenue for one calendar year, broken down by month. Use it whenever 
+      the user asks about sales, revenue or turnover of a given year. Send ONLY the year 
+      (and the category, if the user named one): the component queries the database 
+      itself. Never put sales figures in a BarChart — you do not have them.
+    `,
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        year: { type: Type.NUMBER, description: 'The calendar year, e.g. 2024' },
+        category: { type: Type.STRING, enum: ['all', 'shoes', 'clothing', 'accessories'] },
+      },
+      required: ['year'],
     },
-    required: ['year'],
-  },
-}
+  }
 ```
 
 The next entry in the same array. **Two properties in, a twelve-month chart out.**
@@ -201,28 +236,48 @@ The size of a tool's schema is not the size of its UI — and that is a decision
 
 Then set up the next slide: everything that makes this tool safe is in the four lines of English above the schema, not in the schema.
 
+
 ---
 
-## Three fields — and one of them is prose
+## What comes back
+
+
+Prompt: _How much did we sell shoes in 2024?_
+
+```json
+[
+  { 
+    "component": "SalesReport",
+    "props": { 
+      "year": 2024,
+      "category": "shoes"
+    } 
+  }
+]
+```
+The model chose the component passing the required parameters: `year` and `category`:<br />
+the component can now fetch data using these params
+
+---
+
+## Three fields
 
 Three things travel to the model: the **name**, the **description**, the **schema of the props**.
 
-```ts [2|3-5|6-10]
+```ts [2|3|4-8]
 {
-  name: 'SalesReport',              // what the model calls back
-  description:                      // the only manual it ever gets
-    'Total sales for one year, by month. Send ONLY the year — ' +
-    'the component queries the database itself.',
-  parameters: {                     // what it is allowed to send
+  name: 'ToolName',       // WHICH component: the model sends this name back
+  description: '....',    // WHEN to reach for it: prose, and the field that decides
+  parameters: {           // WHAT it may send you: and nothing outside this
     type: Type.OBJECT,
-    properties: { year: { type: Type.NUMBER }, category: { type: Type.STRING } },
-    required: ['year'],
+    properties: { ... },
+    required: [],
   },
 }
 ```
 
 
-<blockquote class="fragment">An <b>MCP tool</b> is declared with these same three fields — it just spells <code>parameters</code> as <code>inputSchema</code>.</blockquote>
+<blockquote class="fragment">An <b>MCP tool</b> is declared with these same three fields: it just spells <code>parameters</code> as <code>inputSchema</code>.</blockquote>
 
 Note: the same tool as the previous slide, cut down to the bone — three fields, one comment each. Read the three comments out loud in order and the whole mechanism is on screen at once; this is the slide to photograph.
 
@@ -236,13 +291,13 @@ Then land the fragment and move on — do not explain MCP yet. It is only a hook
 
 ---
 
-## One call, one or more components
+## Configure tools (in Gemini SDK)
 
-```ts [7-9|10|11-14|18-20]
+```ts [1,3,4|5|7-9|10|11-14|18-21]
 const ai = new GoogleGenAI({ apiKey });
 
 const res = await ai.models.generateContent({
-  model: 'gemini-2.5-flash',
+  model: 'gemini-3.8-flash',
   contents: 'Introduce Ada Lovelace, and tell me how much we sold in 2024.',
   config: {
     systemInstruction:
@@ -256,6 +311,7 @@ const res = await ai.models.generateContent({
   },
 });
 
+// one function call per tool 
 const ui = (res.functionCalls ?? []).map(
   (call) => ({ component: call.name, props: call.args }) as UISpec,
 );
@@ -265,32 +321,24 @@ The model does not return a UI. It returns **which of your functions to call, an
 
 Note: two things to point at. `mode: ANY` is the whole trick — it forbids prose, so the answer is always a UI. And `res.functionCalls` is a *list*: this is the jump from "the model picks a component" (level 3) to "the model composes a screen" (level 4) and it costs exactly one line of code. Say that the SDK already validated the arguments against the schema before handing them to me — if the model invents a prop, I never see it.
 
+
+
 ---
 
-## What comes back — and who renders it
-
-```json
-[
-  { "component": "UserCard",
-    "props": { "name": "Ada Lovelace", "role": "Mathematician",
-               "skills": ["Analytical Engine", "Algorithms", "Symbolic logic"] } },
-  { "component": "SalesReport",
-    "props": { "year": 2024 } }
-]
-```
+## Client: render components from Catalog
 
 ```tsx
-const registry = { Alert, UserCard, BarChart, SalesReport };
+const UIKIT = { Alert, UserCard, BarChart, SalesReport };
 
-ui.map((node, i) => {
-  const Cmp = registry[node.component];
-  return Cmp ? <Cmp key={i} {...node.props} /> : null; // not in the registry → nothing renders
+ui.map((item, i) => {
+  const Component = UIKIT[item.component];
+  return Component ? <Component key={i} {...node.props} /> : null
 });
 ```
 
-One question, two components, one screen — assembled for *this* question and no other. Anything outside the registry simply does not exist. No markup, no `innerHTML`, no exploit.
+Anything outside the registry simply does not exist. No markup, no `innerHTML`, no exploit.
 
-<p class="fragment">And look at the second entry: <b>one field of JSON</b> becomes a twelve-month chart. The model chose the component and the year. Your app produced every number on screen.</p>
+
 
 Note: the renderer is nine lines and there is no framework in sight — that is the point, and it is worth saying that everything else in this talk is this same idea with more plumbing. The `registry` lookup is the security boundary: it is a whitelist by construction, not a filter someone has to remember to write.
 
@@ -368,14 +416,14 @@ Se questa architettura suona familiare è perché è esattamente il sandbox prox
 
 ## Why not just let it write the code?
 
-- **design system** — generated CSS drifts from your brand within one prompt
-- **accessibility** — you spent months on focus management; a generated `<div onclick>` throws it away
-- **security** — arbitrary markup from a probabilistic system, rendered in your origin. No.
-- **testability** — you cannot write a regression test for a UI that is different every time
-- **latency & cost** — emitting a component name is ~10 tokens; emitting a component is ~800
-- **compliance** — you cannot audit a screen that existed once, for one user
+- **design system**: generated CSS drifts from your brand within one prompt
+- **accessibility**: you spent months on focus management; a generated `<div onclick>` throws it away
+- **security**: arbitrary markup from a probabilistic system, rendered in your origin. No.
+- **testability**: you cannot write a regression test for a UI that is different every time
+- **latency & cost**: emitting a component name is ~10 tokens; emitting a component is ~800
+- **compliance**: you cannot audit a screen that existed once, for one user
 
-<p class="fragment">Constraining the model is not a limitation of the technique. <b>It is the technique.</b></p>
+<blockquote class="fragment">Constraining the model is not a limitation of the technique. <b>It is the technique.</b></blockquote>
 
 Note: this is the slide the skeptical senior dev in row 3 is waiting for. Do not skip it. The token-cost argument usually wins over the architecture argument, oddly enough.
 
@@ -391,7 +439,7 @@ Con la UI generata a runtime non hai niente da mostrare: quella schermata è esi
 
 ```mermaid
 flowchart LR
-    S[Your app state<br/>signals / store] -->|renders| UI[Generated UI]
+    S[Your app state<br/>- signals / store -] -->|renders| UI[Generated UI]
     UI -->|user clicks slider| E[Event]
     E -->|updates| S
     E -.->|"summary, not the DOM"| C[Model context]
@@ -413,9 +461,10 @@ Note: common beginner mistake: treating the generated tree as state and re-askin
 | **inside your app** | **from a remote server** |
 | --- | --- |
 | the model composes **your own** components | a third party ships the data **and** its UI, in a sandbox |
-| full design-system fidelity | interop: any host, any provider |
+| full design-system fidelity | interop: any host |
 | your DI, your state, your tests | the server team owns its own UX |
 | you control everything — and you must build everything | isolation, trust and consent become **protocol** problems |
+| GOAL: _"Pixel Perfect"... in your app_ 🥳 | GOAL: _Goog Enough, everywhere_ 😅 |
 
 <p class="fragment">Same idea, two trust boundaries. The second one is <b>MCP UI / MCP Apps</b>.</p>
 
@@ -425,17 +474,49 @@ Note: this is the hinge slide into the MCP UI / MCP Apps part. Do not name the l
 
 ## The hard parts (that demos never show)
 
-- **non-determinism** — the same question can produce two different layouts. Users notice.
-- **evaluation** — "is this UI good?" is not a unit test. You need eval sets and human review.
-- **fallbacks** — what renders when the model picks nothing? Always ship a prose fallback.
-- **latency budget** — a tool call + a UI generation is seconds, not milliseconds. Design for it.
-- **accessibility** — generated ≠ exempt. Your components carry the a11y contract.
-- **i18n** — the model will happily answer in the wrong language. Pin it in the system prompt.
-- **cost** — every render is tokens. Cache aggressively; not every screen deserves a model.
+- **non-determinism**: the same question can produce two different layouts. Users notice.
+- **evaluation**: "is this UI good?" is not a unit test. You need human review.
+- **fallbacks**: what renders when the model picks nothing? Always ship a prose fallback.
+- **latency budget**: a tool call + a UI generation is seconds, not milliseconds. Design for it.
+- **accessibility**: generated ≠ exempt. Your components carry the a11y contract.
+- **i18n**: the model will happily answer in the wrong language. Pin it in the system prompt.
+- **cost**: every render is tokens. Cache aggressively; not every screen deserves a model.
 
-Note: honesty slide. It buys credibility for everything I claimed before it, and it is the part people email me about afterwards.
+Note: ACCESSIBILITY
+
+ generated ≠ exempt — "generata" non vuol dire "esentata". Nessuna normativa e nessun utente fa sconti perché la schermata l'ha composta un
+  modello: WCAG, European Accessibility Act, screen reader, navigazione da tastiera valgono identici. E soprattutto non c'è nessuno a cui
+  dare la colpa: davanti a un audit di accessibilità "l'ha decisa l'AI" non è una scusante, è la tua UI. È il rovescio del bullet di slide 24
+  (riga 420): lì l'argomento era "se lasci scrivere il markup al modello butti via mesi di focus management", qui è "e comunque resti tu il
+  responsabile".
+
+  Your components carry the a11y contract — la parte rassicurante, ed è tutta la tesi del catalogo. Siccome il modello emette solo un nome
+  più delle props, non tocca mai il DOM: ruoli ARIA, label, ordine di tabulazione, gestione del focus, contrasto, target di tocco vivono nei
+  tuoi componenti, già scritti, già revisionati, già testati. L'accessibilità è compilata dentro la libreria una volta sola, non rinegoziata
+  a ogni risposta. Un <div onclick> generato al volo non ha nessun contratto; il tuo <Button> sì.
+--
+CACHE: VARIE OTTIMIZZAZIONI
+BASE:
+ 1. Non chiamare il modello — not every screen deserves a model
+ Se l'input matcha un intent noto — un click su un suggerimento, una query salvata, un pattern riconoscibile — rendi il componente direttamente. 
+
+2. GIUSTO MODELLO
+Modello piccolo e veloce (Flash / Haiku) per scegliere il tool; quello grande solo se il piccolo non è sicuro o se la richiesta è composita. Scegliere fra 20 nomi non è un compito da modello di frontiera.
+
+3.   Entry point non conversazionali. Bottoni, filtri, deep link: producono la stessa tool call a costo zero. Il modello è per chi non sa come
+  chiedere.§§
+ALTRE OTTIMIZZAIZONI:
+1. Cachare la decisione, non la risposta
+ Cache della tool call — chiave: hash(domanda normalizzata + versione catalogo + locale + ruolo utente), valore: il JSON minuscolo { name:
+    'SalesReport', args: { year: 2024 } }. Cache hit = il modello non viene chiamato affatto.
+
+2. pagare meno la chiamata che fai davvero
+
+  Prompt / context caching del provider. Nel tuo payload la parte grossa e stabile è il system prompt più il catalogo dei tool — nome,  description e schema di ogni componente, e le description sono lunghe apposta. Tutti i provider hanno una forma di caching del  prefisso; su Gemini, che è quello dei demo, è il context caching. Due regole pratiche: il prefisso deve essere byte-identico fra una chiamata e l'altra, e tutto ciò che varia — timestamp, user id, cronologia — va dopo il catalogo, mai in mezzo. Sbagliare l'ordine dei messaggi è il modo più comune per pagare tutto a prezzo pieno senza accorgersene.
 
 ---
+
+<!-- disabled -->
 
 ## Rules of thumb
 
@@ -452,8 +533,8 @@ Note: last one matters most and it is the one people forget: this is a tool for 
 
 ---
 
-## Enough theory
+## Enough theory. What's next?
 
-First a look at the destination — then we build it: **MCP**, **MCP UI**, **MCP Apps**.
+1. How a GenUI framework work.
+2. Then we build it: **MCP**, **MCP UI**, **MCP Apps**.
 
-Note: transition into the demo videos, then the MCP part. Timing check: this intro should land at ~15 minutes. If I am over, cut the "hard parts" slide down to three bullets — everything else is load-bearing.

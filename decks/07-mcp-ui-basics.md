@@ -19,16 +19,55 @@ An MCP tool can return exactly one thing: text. JSON at best, which the model th
 ```json
 {
   "content": [
-    { "type": "text", "text": "Rome: 23°, clear sky" }
+    { 
+      "type": "text", 
+      "text": "Rome: 23°, clear sky" 
+    }
   ]
 }
 ```
 
-- perfect for a single value
-- useless for components (lists, maps, ...) and apps
-- the user can **re-read**, not **act**
+> useless for components (lists, maps, ...) and apps
 
 Note: this is not about looks. A conversation is an extremely narrow interface: every interaction costs a full round trip through the model.
+
+---
+
+# We need more than text to build UI
+
+```typescript
+ {
+  content: [{
+    type: "text",
+    text: `5 properties match your search.\n${summary}`,
+  }],
+  structuredContent: {
+    buildings: [],
+    total: all.length,
+    filters: { city, type, maxPrice, minRooms },
+  },
+};
+```
+
+This is what we will do with MCP UI!
+
+
+
+---
+
+![Widget embedded in a chat message: bubble → host UI container → AppRenderer → sandboxed iframe → widget](assets/mcp_ui_chat_inline_mockup_1788469813154.jpg)
+
+Note: this is the classic placement — the widget rendered inline in the conversation stream. From the outside in: the chat message bubble, the host's UI container, the `AppRenderer`, the sandboxed `iframe`, and finally the widget itself with its property cards. **Next slide is the live demo** — the same picture, running: ask it *"immobili a Roma sotto i 500.000"* and let the widget appear inside the conversation. Then come back and we build it.
+
+
+
+---
+
+![Host app anatomy: browser window → host app → widget container → AppRenderer proxy layer → sandboxed iframe → widget HTML](assets/mcp_ui_nested_mockup_1788469651956.jpg)
+
+Note: same layers, seen in a full host application. The numbers walk outside-in: browser window, host app (localhost:5173), the widget container, the `AppRenderer` proxy layer, and the sandboxed `iframe` on the server's origin (localhost:3010) running `buildings-widget.html`. Keep these layers in mind — the next slide is the same picture as an architecture diagram.
+
+
 
 ---
 
@@ -50,22 +89,6 @@ The host knows nothing about the widget: it downloads it from the server and run
 
 ---
 
-![Host app anatomy: browser window → host app → widget container → AppRenderer proxy layer → sandboxed iframe → widget HTML](assets/mcp_ui_nested_mockup_1788469651956.jpg)
-
-Note: same layers, seen in a full host application. The numbers walk outside-in: browser window, host app (localhost:5173), the widget container, the `AppRenderer` proxy layer, and the sandboxed `iframe` on the server's origin (localhost:3010) running `buildings-widget.html`. Keep these layers in mind — the next slide is the same picture as an architecture diagram.
-
-
-
----
-
-![Widget embedded in a chat message: bubble → host UI container → AppRenderer → sandboxed iframe → widget](assets/mcp_ui_chat_inline_mockup_1788469813154.jpg)
-
-Note: this is the classic placement — the widget rendered inline in the conversation stream. From the outside in: the chat message bubble, the host's UI container, the `AppRenderer`, the sandboxed `iframe`, and finally the widget itself with its property cards. **Next slide is the live demo** — the same picture, running: ask it *"immobili a Roma sotto i 500.000"* and let the widget appear inside the conversation. Then come back and we build it.
-
-
-
----
-
 <!-- demo: http://localhost:5173/#/ -->
 
 ## MCP Demo
@@ -76,7 +99,27 @@ Note: this is the classic placement — the widget rendered inline in the conver
 
 
 
-## MCP UI → MCP Apps
+## Two names, one mechanism
+
+| | **MCP Apps** | **mcp-ui** |
+| --- | --- | --- |
+| what it is | the official **spec** | an **implementation**, plus DX |
+| who | `modelcontextprotocol/ext-apps` | community project (idosal) |
+| it defines | `ui://`, mimeType, `_meta.ui`, the postMessage protocol | `createUIResource`, `AppRenderer`, the sandbox proxy, adapters |
+| if it vanished | there is no contract left | you rewrite ~200 lines, the contract survives |
+
+They are not alternatives: **mcp-ui speaks MCP Apps**.
+
+Note:
+- the sentence to land: spec vs library, like the DOM and jQuery — if mcp-ui disappeared you would rewrite code, not the contract. Interop with another host comes from the spec, never from sharing a dependency
+- **the naming trap**: "MCP UI" means two things — the generic idea (UI over MCP), which is what the talk title uses, and the `mcp-ui` project, which is what the `package.json` uses. Say it out loud once and nobody gets lost
+- mcp-ui **predates** the standard: it is still self-described as an "experimental community playground for MCP UI ideas", and it used to ship its own postMessage protocol (`ui-lifecycle-iframe-ready` / `render-data` / `ui-action`). That protocol is deprecated today — and it is exactly what the `adapters` option translates (it comes back a few slides from here)
+- **the third player**: OpenAI's Apps SDK, same idea, different wire, ChatGPT only. MCP Apps is the attempt to standardise that ground; the other mcp-ui adapter exists to run those widgets
+- what the spec actually pins down is only what travels between two codebases written by different people: the `ui://` scheme, `text/html;profile=mcp-app`, `_meta.ui.resourceUri`, and the `ui/*` messages. Everything else — how you build the HTML, who serves the proxy — is library territory
+
+---
+
+## Who uses what, in the demo
 
 
 ```json [1-6|8-12]
@@ -95,8 +138,7 @@ Note: this is the classic placement — the widget rendered inline in the conver
 ```
 
 
-
-Note: `ext-apps` is the official MCP package; `@mcp-ui/*` builds on it. Server side the demo uses both: `createUIResource` from mcp-ui, `registerAppTool` / `registerAppResource` from `@modelcontextprotocol/ext-apps/server`. Client side it's gone — nothing under `src/` imports it. It does come back inside the **widget**, but over HTTP: the server serves the `app-with-deps` bundle at `/ext-apps.js` and the iframe imports the `App` class from there, so the widget needs no build step at all.
+Note: server side the demo uses both: `createUIResource` from mcp-ui, `registerAppTool` / `registerAppResource` from `@modelcontextprotocol/ext-apps/server`. Client side ext-apps is gone — nothing under `src/` imports it, `AppRenderer` is the only reason `@mcp-ui/client` is there. It does come back inside the **widget**, but over HTTP: the server serves the `app-with-deps` bundle at `/ext-apps.js` and the iframe imports the `App` class from there, so the widget needs no build step at all.
 
 ---
 
@@ -116,7 +158,7 @@ Note: `ext-apps` is the official MCP package; `@mcp-ui/*` builds on it. Server s
 
 An Express route. One `McpServer` per session, tools registered into it.
 
-```ts [1-2|4-7|9-12|14]
+```ts [1-9,16|11-14]
 // Handle POST requests for client-to-server communication.
 app.post("/mcp", async (req, res) => {
   let transport: StreamableHTTPServerTransport;
@@ -229,7 +271,7 @@ Note:
 
 Step 3: the tool says **where** its UI lives — and answers.
 
-```ts [1|2|3-7|9-16|14]
+```ts [1|2|3-7|9-16]
 registerAppTool(server,
   "hello_world",          // the tool name: what the model calls
   { 
@@ -264,7 +306,7 @@ Note:
 
 ## The tool in one file
 
-```ts [1-2|4-8|10-12|14-22]
+```ts [1-2|4-8|10-12|14-23]
 const htmlPath = path.join(__dirname, "hello-widget.html");   // a plain .html file
 const htmlString = fs.readFileSync(htmlPath, "utf8");
 
@@ -309,7 +351,7 @@ Note: four steps, zero hand-rolled routing. Next we open the thing that gets mou
 
 An ordinary HTML file. No build, no framework, no bundler.
 
-```html [1-4|8-10|18-19|22|12-15]
+```html [1-4|8-10,22|18-19|12-15]
 <div class="hw-root">
   <div class="hw-title" id="hw-title">Hello, world!</div>
   <div class="hw-sub">Rendered by the MCP server — display only, no actions.</div>
@@ -356,22 +398,50 @@ app.get("/ext-apps.js", (_req, res) => {
 });
 ```
 
-Six lines of Express. The widget writes `import { App } from "http://localhost:3010/ext-apps.js"` — **no build, no bundler, no CDN**.
+Six lines of Express. The widget writes `import { App } from "http://localhost:3010/ext-apps.js"` 
 
-Note: this is the other half of the widget's import line, and it lives in `server/src/_index-simplified.ts` right next to the `/mcp` route. Points worth making:
+> **"no build, no bundler and no CDN by choice: see the next slide".**.
 
-- it is **the same file that sits in `node_modules`** — `app-with-deps` is a prebuilt, self-contained ESM bundle (~330 KB) that the package ships precisely for this. Nothing is compiled at runtime
-- the `cors({ origin: "*" })` a few lines above is not decoration: the iframe is on a **different origin**, so without those headers the `import` is blocked. Same reason the MCP endpoint needs them
-- **why the server and not the host app**: the widget belongs to the server, so its dependency should too. The host stays ignorant — it does not bundle anything for a widget it has never seen, which is the whole point of embedding third-party UI
-- you *could* import from a CDN (esm.sh, unpkg) and skip this route entirely — but then a conference room with bad wifi kills your demo, and the sandbox CSP has to allow that origin. In production: serve it from your own domain, versioned and cached
-- **on stage**: open `http://localhost:3010/ext-apps.js` in a tab. It is just a JS file. That usually removes the last bit of magic
+Note: ext-apps   È il runtime lato widget di MCP Apps: l'unica cosa che il tuo .html deve avere per essere un widget invece di una pagina qualsiasi. Esporta una classe pubblica,
+  App, più una manciata di helper.
+
+ Molto più dei 5 metodi in tabella nel deck (decks/07-mcp-ui-basics.md:457). Dalle firme reali in app.d.ts:
+
+  - handshake e stato: connect(), getHostCapabilities(), getHostVersion(), getHostContext()
+  - in ingresso: eventi toolinput, toolinputpartial (streaming degli argomenti mentre il modello li scrive), toolresult, toolcancelled
+  - verso il server, senza passare dal modello: callServerTool(), readServerResource(), listServerResources()
+  - verso il modello: sendMessage(), e — questa è ghiotta — createSamplingMessage(): il widget può chiedere all'host di fare una chiamata LLM per suo conto. E
+    updateModelContext(): il widget scrive nel contesto del modello
+  - verso l'host: openLink(), downloadFile(), requestDisplayMode() (es. fullscreen), sendSizeChanged() + setupSizeChangedNotifications() (che ti attacca un
+    ResizeObserver da solo), requestTeardown(), sendLog()
+  - tema: applyDocumentTheme(), applyHostStyleVariables(), applyHostFonts(), getDocumentTheme() — il widget eredita i colori e i font dell'host invece di stonare
+    dentro la chat
+
+-
+
+OBIEZIONI
+ La nota (le due obiezioni, in ordine di frequenza)
+
+ - "e un CDN?" — funziona, ed è una scelta legittima:
+   import { App } from "https://cdn.jsdelivr.net/npm/@modelcontextprotocol/ext-apps@1.7.5/dist/src/app-with-deps.js".
+   Passa anche da un CDN che serve file grezzi, perché il bundle non ha import. Il prezzo:
+   (a) la wifi della sala, (b) la CSP: resourceDomains di default è vuoto = nessuno
+   script esterno, quindi vai dichiarato nel _meta e l'host deve approvarti — schermata
+   bianca se dice no; (c) supply chain: chi controlla quell'URL esegue codice nell'iframe
+   dei tuoi utenti, quindi versione pinnata obbligatoria; (d) il CDN vede l'IP di ogni
+   utente. CDN e self-hosting risolvono lo stesso problema (dare un URL): cambia di chi
+   è il dominio da far approvare
+ - "e incollare il bundle nell'HTML?" — l'unico modo di evitare l'URL: 332 KB × 4 widget
+   dentro il payload MCP, mai in cache, e il file non è più apribile in un editor
+ - in produzione: stesso schema del demo, con un dominio vero al posto di localhost,
+   versionato e in cache
 
 ---
 
 
 ## The host, in React
 
-Those four steps, in code: connect, call the tool, hand the result to `AppRenderer`. Nothing else.
+Connect, call the tool, hand the result to `AppRenderer`. Nothing else.
  
 ```tsx [1|2|5-6|8-13|18-23]
 const TOOL = { name: "hello_world", input: { name: "Fabio" } };
@@ -403,6 +473,97 @@ export function MinimalTool() {
 ```
 
 Note: worth saying out loud, because the words collide: **this component is the host** — it owns the conversation, decides to call the tool and mounts the widget. The MCP **client** is one line inside it, the object `createMcpClient` returns: a single connection to a single server. Host = the app, client = its connection. This is `MinimalTool.tsx` from the demo, trimmed only of the unmount cleanup (`mcp?.close()`). No `onMessage`, `onSizeChanged`, `onFallbackRequest`: a widget that just displays data doesn't need them — they show up in the next examples, once the widget starts talking back. `createMcpClient` is three lines: `new Client(...)` with `@mcp-ui/client`'s `UI_EXTENSION_CAPABILITIES`, then `connect()` over a `StreamableHTTPClientTransport`.
+
+---
+
+## The real host: the model decides
+
+`MinimalTool` hard-codes the call. Here nobody knows in advance which tool will run — or whether one runs at all.
+
+```ts [1|3-4|6|7]
+const ai = new GoogleGenAI({ apiKey });
+
+const chat = ai.chats.create({
+  model: "gemini-2.5-flash",
+  config: {
+    tools: [mcpToTool(client)],                     // the whole MCP server, as functions
+    automaticFunctionCalling: { disable: true },    // ← we run the tool, not the SDK
+  },
+});
+```
+
+One line publishes every tool to the model. The line under it is what makes widgets possible at all.
+
+Note:
+- `mcpToTool(client)` reads `tools/list` off the MCP client and turns each `inputSchema` into a function declaration. Add a tool on the server, restart, the model can call it — no mapping table on the host, which is the whole promise of MCP cashed in one line
+- **`automaticFunctionCalling: { disable: true }` is the reason this slide exists.** By default the SDK executes the tool for you, in the background, and hands you back only the final prose. You would never hold the `CallToolResult` — so you could never mount a widget with it. A generative-UI host *has* to run the loop by hand. This is the single line people miss, and the failure is silent: everything works, no widget ever appears
+- Gemini here because the demo uses `@google/genai`, but the shape is identical with any provider's function calling
+- the chat session is cached in a `useRef` and rebuilt only when the API key changes: the conversation must survive re-renders, otherwise the model loses its history at every keystroke
+- `GeminiTest.tsx:113-129`
+
+---
+
+## The loop, by hand
+
+Ask the model, look for a function call, and from there it is a loop.
+
+```ts [1-2|3|5|6-7|9-10|12-14|15]
+// the model's answer: prose, or a request to call a tool
+let result = await chat.sendMessage({ message: userText });
+let functionCall = getFunctionCall(result);   // digs into candidates[0].content.parts
+
+while (functionCall) {
+  const { name, args } = functionCall;
+  setToolData({ callId, name, input: args });                       // ① widget on screen
+
+  const toolResult = await client.callTool({ name, arguments: args });
+  setToolData({ callId, name, input: args, result: toolResult });   // ② same widget, with data
+
+  result = await chat.sendMessage({                                 // ③ back to the model
+    message: [{ functionResponse: { name, response: toolResult } }],
+  });
+  functionCall = getFunctionCall(result);     // same two lines as above: another tool?
+}
+```
+
+Two `setToolData`, **one** `callId`: the widget appears *before* its data exists.
+
+Note:
+- this is why the widget has two listeners: ① mounts it and pushes `toolinput` — what the model *decided*, while the tool is still running (a spinner with the right city name already in it); ② pushes `toolresult`. Same `callId` = same iframe, no remount, no flash
+- ③ is the part people forget: the tool result goes **back to the model** too. Same `CallToolResult`, two readers — the model reads `content`, the widget already read `structuredContent`. One call, both audiences, exactly as the tool handler promised
+- it is a `while`, not an `if`: the model can chain tools, and each one mounts its own widget in turn
+- the two lines above the loop and the last line inside it are **the same pair**: send, then look for a function call. That is the whole shape — the loop just runs it again as long as the model keeps asking for tools
+- `getFunctionCall` is a three-line local helper, not an SDK function: `res.candidates?.[0]?.content?.parts?.find(p => p.functionCall)?.functionCall`. Pure Gemini plumbing — with another provider it is a different shape, same idea
+- the only thing still trimmed off the slide: `callId`, which is `++callIdRef.current`, a counter in a ref
+- `GeminiTest.tsx:152-194`
+
+---
+
+## The same `AppRenderer`, wired up
+
+It lives **inside the tool loop**: every `setToolData` re-renders it, every new `callId` remounts it.
+
+```tsx [1|3|4-5|6|7]
+{toolData && (
+  <AppRenderer
+    key={toolData.callId}                       // ← a new sandbox per tool call
+    client={client} 
+    sandbox={sandbox}
+    toolName={toolData.name} 
+    toolInput={toolData.input} 
+    toolResult={toolData.result}
+    onMessage={async (p) => { pushIntoChat(p); return { isError: false }; }}
+    onSizeChanged={(d) => setWidgetSize(d)}     // the container actually resizes
+  />
+)}
+```
+
+Note:
+- **the point of the slide**: the renderer is not mounted once and left alone, it sits in the tool loop. The loop writes `toolData`, React re-renders; when the `callId` changes the iframe is thrown away and rebuilt — one widget per call, never recycled. That is the `document.write` consequence we meet again in "One proxy, one widget"
+- `sandbox` comes from a `useMemo` (`GeminiTest.tsx:230`): a new `URL` object per render would re-trigger the renderer's iframe effect and abort the handshake. Rare bug, ugly to debug
+- `onSizeChanged` really resizes the container — the demo even prints `width x height` in the corner so you can watch the widget negotiate its own size
+- there is a fourth handler, `onFallbackRequest`, for custom widget → host commands: we meet it with the color picker in the next section
+- `GeminiTest.tsx:433-473`
 
 ---
 

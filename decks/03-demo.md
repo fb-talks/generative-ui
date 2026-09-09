@@ -18,8 +18,8 @@ Note: ask the room: how many screens in your app exist only because of one edge 
 
 - We design **one UI for every user**, then hide 90% of it behind filters, tabs and menus
 - Every new use case = a new screen, a new route, a new sprint
-- The user knows what they want — they just can't **say** it to a form
-- Search boxes return links. Dashboards return everything. Neither returns *an answer*
+- The user knows what they want: they just can't **say** it to a form
+- Search boxes often return links. Dashboards return everything. Neither returns *an answer*
 
 <p class="fragment">Chat solved the <b>input</b> problem.<br>It gave us back a <b>wall of text</b> as output.</p>
 
@@ -33,7 +33,6 @@ Note: this is the setup for the whole talk. Chat was a huge UX regression in one
   <div style="flex: 1;">
     <p><strong>What the model says</strong></p>
     <blockquote>Running shoes made €6,700 this month, up 12% on last month. Week one was €1,200, week two €1,810, week three €1,640 and week four €2,050. Your last order, A-99213, was delivered on the 14th.</blockquote>
-    <p style="font-size: 0.7em; opacity: 0.7;">To compare two of those weeks — or to report that order — the user must now <b>type another sentence</b>, and wait for another paragraph.</p>
   </div>
   <div style="flex: 1;">
     <p><strong>What the user needs</strong></p>

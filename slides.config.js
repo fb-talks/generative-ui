@@ -52,5 +52,11 @@ export default {
   signature: { name: 'www.fabiobiondi.dev', url: 'https://www.fabiobiondi.dev', logo: 'assets/jshd-sticker.png' },
 
   // Passed straight to Reveal.initialize().
-  // reveal: { transition: 'fade', slideNumber: false },
+  // `fragmentInURL: false` keeps the step number out of the address bar. The
+  // bullets of a list only become fragments after init — fb-slides adds them —
+  // so reloading a URL that carried a step restored that step while the fragments
+  // written by hand were still the only numbered ones: a `<p class="fragment">`
+  // at the foot of a slide came up already visible, ahead of its bullets. With no
+  // step in the URL, a reload always starts the slide from its first build.
+  reveal: { fragmentInURL: false },
 };
