@@ -27,7 +27,7 @@ Note: this is the setup for the whole talk. Chat was a huge UX regression in one
 
 ---
 
-## Text is a terrible output format
+## ... but "text" is a terrible output format
 
 <div style="display: flex; gap: 2.5rem; align-items: flex-start;">
   <div style="flex: 1;">
@@ -35,7 +35,7 @@ Note: this is the setup for the whole talk. Chat was a huge UX regression in one
     <blockquote>Running shoes made €6,700 this month, up 12% on last month. Week one was €1,200, week two €1,810, week three €1,640 and week four €2,050. Your last order, A-99213, was delivered on the 14th.</blockquote>
   </div>
   <div style="flex: 1;">
-    <p><strong>What the user needs</strong></p>
+    <p><strong>What the user would like</strong></p>
     <div style="padding: 1em 1.2em; border: 1px solid rgba(148, 163, 184, 0.4); border-radius: 8px;">
       <div style="font-size: 0.75em; opacity: 0.75;">Running shoes — revenue, by week</div>
       <div style="display: flex; align-items: flex-end; gap: 0.8rem; height: 130px; margin: 0.8em 0 0.4em;">

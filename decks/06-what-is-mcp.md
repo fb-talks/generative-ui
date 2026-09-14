@@ -20,11 +20,11 @@ A model on its own can only produce text. To do anything useful it needs your da
 flowchart LR
   A[Claude] --- X1[GitHub]
   A --- X2[Postgres]
-  A --- X3[Figma]
-  B[ChatGPT] --- X1
+  A --- X3[Your server]
+  B[Gemini] --- X1
   B --- X2
   B --- X3
-  C[Cursor] --- X1
+  C[Visual Studio Code] --- X1
   C --- X2
   C --- X3
 ```
@@ -40,14 +40,14 @@ Note: the classic M×N. Each vendor invented its own plugin format, and the same
 ```mermaid
 flowchart LR
   A[Claude] --> P((MCP))
-  B[ChatGPT] --> P
-  C[Cursor] --> P
+  B[Gemini] --> P
+  C[Visual Studio Code] --> P
   P --> X1[GitHub]
   P --> X2[Postgres]
   P --> X3[Your server]
 ```
 
-M + N. Write the server **once**, every host that speaks MCP can use it.
+Every host that speaks MCP can use it.
 
 - open standard, introduced by Anthropic at the end of 2024
 - SDKs in TypeScript, Python, Java, C#, …
@@ -66,7 +66,7 @@ M + N. Write the server **once**, every host that speaks MCP can use it.
 ```mermaid
 flowchart LR
   H[Host] --> C1[Client] --> S1[Weather MCP]
-  H --> C2[Client] --> S2[Figma, GitHub, ... MCPS]
+  H --> C2[Client] --> S2[GitHub, Your Server, ... MCPs]
 ```
 
 Note: the distinction that matters for later — **the model never talks to the server**. The host does. The model only decides *what* to ask for, and it is the host that executes, or refuses.
@@ -75,13 +75,13 @@ Note: the distinction that matters for later — **the model never talks to the 
 
 ## What a server exposes
 
-| primitive | who decides to use it | example |
+| PRIMITIVE | WHO DEVICES TO USE IT | EXAMPLE |
 | --- | --- | --- |
-| **Tools** | the **model**, on its own | `get_weather`, `create_issue` |
-| **Resources** | the **host** — never the model | a file, a record, `ui://…` |
+| **Tools** | the **model**, (i.e. Gemini) | `get_weather`, `fetch_data`, ... |
+| **Resources** | the **host** (i.e. the Client)  | a file, a record, `ui://…` |
 | **Prompts** | the **user**, explicitly | a slash command, a template |
 
-Tools are the interesting part today — but keep **resources** in mind, they come back in ten minutes.
+> Keep **resources** in mind, they come back soon with MCP Apps / MCP UI
 
 Note: three primitives, three different owners. The confusion "resource = anything read-only" comes precisely from ignoring who pulls the trigger. On the middle row, say it out loud: a resource is fetched by the **host application** — either because the user picked it (attaching a file, an @-mention) or because the app's own logic went and got it. The model can never reach for one by itself. That second case is the one that matters today: the `ui://` widget is fetched by the host on its own, because the tool result points at it. Nobody clicks anything.
 
@@ -95,7 +95,7 @@ server.registerTool("get_weather", {
   inputSchema: { city: z.string().describe("City name, e.g. 'Roma'") },
 },
   async ({ city }) => {
-    // async request here ...
+    // fetch data here: await fetch(...)
     return {
       content: [
         { type: "text", text: "Rome: 23°, clear sky" },
@@ -106,7 +106,7 @@ server.registerTool("get_weather", {
 ```
 
 - the **description** and the `describe()` strings are the prompt: that is what the model reads to decide
-- the return value is `content` — a list of blocks
+- the return value is `content`
 
 Note: no parsing, no intent matching, no routing. You declare the shape, the model fills it in. Which is also why a badly written description is a bug.
 

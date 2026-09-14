@@ -21,7 +21,7 @@ Note: this is the other half of the "two places the UI can come from" slide. MCP
 - A **client-side** framework for Angular and React: the agent loop runs in the browser
 - The model does not emit HTML: it picks from a **catalog of your components** and fills their inputs
 - Provider-agnostic: OpenAI, Google, Anthropic, Writer, Ollama, Azure
-- Streaming-first, signal-based on the Angular side
+- _Angular_: signal-based - _React_: hooks
 - Open source, MIT
 
 Note: the important word is *catalog*. The model never returns markup. It returns a JSON tree that says "render `PropertiesList` with these properties". You keep your design system, your DI, your tests, your a11y contract. Nothing untrusted ever reaches the DOM.
@@ -36,7 +36,7 @@ Note: thirty seconds, then move on. One input, no filters — the model picks th
 
 ---
 
-## Angular mental model with Signals & `httpResource`
+## Angular (new) mental model: Signals & `httpResource`
 
 <div style="display: flex; gap: 2rem; align-items: flex-start;">
 <div style="flex: 0.85; min-width: 0;">
@@ -86,7 +86,9 @@ flowchart LR
   D -->|JSON| U["UI output<br/>Hashbrown"]
 ```
 
-The model receives the prompt **and** the component catalog. It answers with a JSON tree. Hashbrown renders that tree with your real components.
+* The model receives the prompt **and** the component catalog. 
+* It answers with a JSON tree. 
+* Hashbrown renders that tree with your real components.
 
 Note: three boxes only, on purpose. Prompt in, JSON out, components rendered. The model is a UI compiler — it decides *what* to show; your app still decides *how* it looks and how it behaves.
 
@@ -290,56 +292,9 @@ export const uiPropertiesListComponent = exposeComponent(
 
 Note: note the `@empty` block. Every exposed component must render half-empty and render zero-results — the model *will* hand you an empty array, and it will hand you a partial object mid-stream. Design for partial is not optional here.
 
----
-
-## Streaming changes the UX more than you expect
-
-<div class="cols">
-<div class="col">
-
-
-```ts 
-text: s.string('The description of the product'),
-```
-
-</div>
-
-<div class="col">
-
-
-```ts 
-text: s.streaming.string('The description of the product'),
-```
-
-</div>
-</div>
 
 
 
-<div style="display: flex; gap: 2.5rem;">
-  <div style="flex: 1;">
-    <p><strong>Without streaming</strong></p>
-    <pre style="padding: 0.8em 1em;">[ spinner ]
-[ spinner ]
-[ spinner ]
-→ 4.2s → everything appears</pre>
-    <p style="font-size: 0.7em; opacity: 0.7;">Feels broken.</p>
-  </div>
-  <div style="flex: 1;">
-    <p><strong>With streaming</strong></p>
-    <pre style="padding: 0.8em 1em;">0.3s → first card, name only
-0.6s → slider, still empty
-1.1s → second card
-...  → progressively complete</pre>
-    <p style="font-size: 0.7em; opacity: 0.7;">Feels alive.</p>
-  </div>
-</div>
-
-<p class="fragment">The tree arrives <b>partial</b>. <br /> Your components must survive being rendered with half their inputs:<br /> skeletons, optional props, no crashes on <code>undefined</code>.</p>
-
-<p class="fragment">That is what <code>s.streaming.string</code> and the <code>@empty</code> block on the previous slide are for.</p>
-
-Note: concrete war story here: the first version I built waited for the full JSON. Same model, same latency, and it felt twice as slow. Streaming is not an optimization, it is the product.
 
 ---
 
@@ -364,6 +319,9 @@ export const fetchPropertiesTool = createTool({
 The handler runs **in the browser** — your session, your interceptors, your auth.
 
 Note: this is the difference from a server-side agent. The tool is a normal client function: it can hit your API with the user's cookie, read a signal, open a dialog, navigate the router. No credential ever leaves the browser, and the model never sees the endpoint.
+
+
+
 
 ---
 
@@ -407,6 +365,66 @@ flowchart LR
 ```
 
 Note: same picture as before with the tool loop inserted. Two things to say out loud: the tool branch is optional — for "hello" the model skips straight to components; and the loop can run more than once. Which is also where your latency budget goes.
+
+
+
+
+
+
+
+---
+
+## Streaming changes the UX more than you expect
+
+<div class="cols">
+<div class="col">
+
+
+```ts 
+text: s.string('The description of the product'),
+```
+
+</div>
+
+<div class="col">
+
+
+```ts 
+text: s.streaming.string('The description of the product'),
+```
+
+</div>
+</div>
+
+
+
+<div style="display: flex; gap: 2.5rem;">
+  <div style="flex: 1;">
+    <p><strong>Without streaming</strong></p>
+    <pre style="padding: 0.8em 1em;">[ spinner ]
+[ spinner ]
+[ spinner ]
+→ 4.2s → everything appears</pre>
+    <p style="font-size: 0.7em; opacity: 0.7;">Feels broken.</p>
+  </div>
+  <div style="flex: 1;">
+    <p><strong>With streaming</strong></p>
+    <pre style="padding: 0.8em 1em;">0.3s → partial render
+0.6s → partial render
+1.1s → partial render
+...  → progressively complete</pre>
+    <p style="font-size: 0.7em; opacity: 0.7;">Feels alive.</p>
+  </div>
+</div>
+
+<p class="fragment">The tree arrives <b>partial</b>. <br /> Your components must survive being rendered with half their inputs:<br /> skeletons, optional props, no crashes on <code>undefined</code>.</p>
+
+
+Note: concrete war story here: the first version I built waited for the full JSON. Same model, same latency, and it felt twice as slow. Streaming is not an optimization, it is the product.
+
+
+
+
 
 ---
 

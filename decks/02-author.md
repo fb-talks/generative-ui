@@ -14,7 +14,7 @@ section: About
   <img src="assets/author/JSDAY-26.jpg" alt="Speaking at JSDay 2026">
   <img src="assets/author/devfest-pisa-26.jpg" alt="Speaking at DevFest Pisa 2026">
   <img src="assets/author/devfestroma-25.jpg" alt="Speaking at DevFest Roma 2025">
-
+  
 </div>
 
 <div class="author-bio">
@@ -27,7 +27,7 @@ section: About
     <li><strong>Speaker</strong> &amp; Content Creator</li>
     <li><strong>Community</strong> Founder</li>
   </ul>
-  <p class="author-stack">TypeScript · JavaScript · Angular · React · Redux · Next.js · Astro · Svelte · Vite · Nx · Gemini · Claude</p>
+  <p class="author-stack">Main Skills: TypeScript · Angular · React · Next.js · Gemini · Claude</p>
   <p class="author-meta">❤️ MTB · Snowboard · Tennis · Skate — <strong>FabioBiondi.dev</strong></p>
 </div>
 

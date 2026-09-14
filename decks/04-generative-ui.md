@@ -19,28 +19,27 @@ Note: "the model picks from a menu, it does not cook" — this is the line I wan
 
 ## Three things an LLM can do for you
 
-Same question every time: *"who was Ada Lovelace?"*
+Prompt: *"who was Ada Lovelace?"*
 
-**1. Generate text**: the thing everybody knows. Useful, unstructured, unrenderable.
+**1. Generate text**: Useful, **unstructured**, **unrenderable**.
 
 ```txt
-"Ada Lovelace was a 19th-century mathematician who wrote what is now
- considered the first algorithm, for Babbage's Analytical Engine."
+"Ada Lovelace was a 19th-century mathematician who wrote what is now considered the first algorithm..."
 ```
 
-**2. Generate structured output**: same model, same question. You hand it a **schema**, you get back JSON that fits it. Every time.
+**2. Generate structured output**: You hand it a **schema**, you get back JSON that fits it. Every time.
 
 ```json
 { "name": "Ada Lovelace", "role": "Mathematician", "skills": ["Analytical Engine", "Algorithms", "Symbolic logic"] }
 ```
 
-**3. Call your functions**: "tools". You describe what your app can do; the model decides *when* to call it. Your code still runs the logic.
+**3. Call your functions**: "tools". You describe what your app can do; the model decides *when* to call it. 
 
 ```ts
 tools: [ getSales, findPerson, createTicket ]
 ```
 
-<p class="fragment">Generative UI = <b>#2 + #3</b>, pointed at your component library instead of your database.</p>
+<blockquote class="fragment">Generative UI = <b>#2 and #3</b>, pointed at your component library instead of your database.</blockquote>
 
 Note: 60-second primer, because everything after this builds on it. Do not rush this slide — if they miss "structured output", nothing later makes sense. The analogy that works: structured output is a TypeScript interface the model is forced to satisfy.
 
@@ -81,8 +80,13 @@ Note: walk it slowly, arrow by arrow. The two things to point at: step 2 (we sen
 
 ## Start from the components you already have
 
+
 ```tsx
-// A simple card with name, role and a list of skills
+<UserCard name="Valentino Rossi" role="Rider" skills={['MotoGP', 'GT racing', 'VR46']} />
+```
+
+```tsx
+// A simple card with "name", "role" and a "skills" list
 export type UserCardProps = { name: string; role: string; skills: string[] };
 
 export function UserCard({ name, role, skills }: UserCardProps) {
@@ -96,11 +100,6 @@ export function UserCard({ name, role, skills }: UserCardProps) {
     </div>
   );
 }
-```
-
-```tsx
-// Usage
-<UserCard name="Valentino Rossi" role="Rider" skills={['MotoGP', 'GT racing', 'VR46']} />
 ```
 
 No AI import, no base class, no decorator. 
@@ -136,7 +135,8 @@ const tools: FunctionDeclaration[] = [
 ];
 ```
 
-> The `description` is the only manual the model gets: the schema can enforce that `name` is a string.
+> The `description` is the only manual the model gets: <br />
+the schema can enforce that `name` and `role` are string, `skills` is an array of string and so on...
 
 
 <blockquote class="fragment">The <code>parameters</code> schema is simply <code>UserCardProps</code> (see previous slide).</blockquote>
@@ -155,6 +155,8 @@ The fragment is the reason `UserCard` came first: schema and props are the same 
 
 Prompt: _Who was Ada Lovelace?_
 
+Result: 
+
 ```json
 [
   { 
@@ -171,7 +173,11 @@ Prompt: _Who was Ada Lovelace?_
 
 ---
 
-## …and a component that fetches its own data
+## Another component... that fetches data
+
+```tsx
+<SalesReport year={2025} category="shoes" />
+```
 
 ```tsx 
 export type SalesReportProps = { year: number; category?: string };
@@ -185,11 +191,6 @@ export async function SalesReport({ year, category = 'all' }: SalesReportProps) 
     </div>
   );
 }
-```
-
-```tsx
-// Usage
-<SalesReport year={2025} category="shoes" />
 ```
 
 
@@ -228,7 +229,6 @@ const tools: FunctionDeclaration[] = [
   }
 ```
 
-The next entry in the same array. **Two properties in, a twelve-month chart out.**
 
 Note: this is the second half of the previous slide, so open by pointing at the shape: same three fields, same array, and yet the schema has *shrunk*. `UserCard` declared everything it renders; this one declares two values and produces a whole report.
 
@@ -244,6 +244,7 @@ Then set up the next slide: everything that makes this tool safe is in the four 
 
 Prompt: _How much did we sell shoes in 2024?_
 
+Result:
 ```json
 [
   { 
@@ -255,7 +256,7 @@ Prompt: _How much did we sell shoes in 2024?_
   }
 ]
 ```
-The model chose the component passing the required parameters: `year` and `category`:<br />
+The model chose the component to use, passing the parameters: `year` and `category`:<br />
 the component can now fetch data using these params
 
 ---
@@ -377,9 +378,9 @@ How much of the interface do you hand to the model?
 | 4 | a **composition** of components | your catalog, nested | medium | **yes** |
 | 5 | code, run in a sandbox | a JS runtime in the browser | low | yes — and a sandbox |
 
-Down the table: more **adaptivity**, less **determinism**.
+> More **adaptivity** = less **determinism**.
 
-<p class="fragment"><b>2, 3 and 4 are all generative UI.</b> At 2 the model already decides the content — you just wire the component by hand. From 3 on, that last decision moves too. Most production apps live here; this talk lives at <b>3–4</b>.</p>
+<p class="fragment"><b>2, 3 and 4 are all generative UI.</b> At 2 the model already decides the content, you just wire the component by hand. From 3 on, that last decision moves too.  <b>3–4</b>.</p>
 
 Note: this table is my answer to "is X generative UI?" — usually yes, at some level. Also a gentle way to tell people they can start at level 2 tomorrow without a framework. On the last column, say whose control it is: at 3 the model picks the component but only from your catalog, with props validated by your schema — that is why it is still "high". At 4 the pieces are still yours, but the overall layout emerges at runtime and nobody designed it. At 5 you do not know in advance what will appear, and isolation is the only defence left. Everything we build today lives at 3–4.
 
@@ -414,7 +415,7 @@ Se questa architettura suona familiare è perché è esattamente il sandbox prox
 
 ---
 
-## Why not just let it write the code?
+## Why not just let AI write the code?
 
 - **design system**: generated CSS drifts from your brand within one prompt
 - **accessibility**: you spent months on focus management; a generated `<div onclick>` throws it away
@@ -448,27 +449,12 @@ flowchart LR
     style C fill:#334155,color:#fff
 ```
 
-- The **app** owns state. The generated UI is a *view*, never a source of truth.
-- User interactions go through your normal handlers — the model is not in the click path.
+- The **app** owns state.
+- User interactions go through your normal handlers (no AI here).
 - You feed the model a **summary** of what changed, so the next turn is coherent.
 
 Note: common beginner mistake: treating the generated tree as state and re-asking the model on every interaction. Slow, expensive, non-deterministic. The model is a UI compiler, not an event bus.
 
----
-
-## Two places the UI can come from
-
-| **inside your app** | **from a remote server** |
-| --- | --- |
-| the model composes **your own** components | a third party ships the data **and** its UI, in a sandbox |
-| full design-system fidelity | interop: any host |
-| your DI, your state, your tests | the server team owns its own UX |
-| you control everything — and you must build everything | isolation, trust and consent become **protocol** problems |
-| GOAL: _"Pixel Perfect"... in your app_ 🥳 | GOAL: _Goog Enough, everywhere_ 😅 |
-
-<p class="fragment">Same idea, two trust boundaries. The second one is <b>MCP UI / MCP Apps</b>.</p>
-
-Note: this is the hinge slide into the MCP UI / MCP Apps part. Do not name the libraries yet — name the two *problems* first, so the tools land as answers.
 
 ---
 
@@ -533,8 +519,29 @@ Note: last one matters most and it is the one people forget: this is a tool for 
 
 ---
 
+# UI can come from...  <span class="fragment">the Client or the Server</span>
+
+---
+
+## Two places the UI can come from:
+
+| **CLIENT: inside your app** | **SERVER: from a remote server** |
+| --- | --- |
+| 1. the model _composes_ **your own** components | 1. a third party _ships the data_ **and** _its UI_, in a sandbox |
+| 2. full design-system fidelity | 2. the server team owns its own UX |
+| 3. you own your state, UI, your tests | 3. isolation, trust and consent become **protocol** problems |
+| 4. you control everything, and you must build everything | 4. interop: any host |
+| GOAL: _"Pixel Perfect"... in your app_ 🥳 | GOAL: _Goog Enough, everywhere_ 😅 |
+
+<p class="fragment">Same idea, two approaches. The second one is <b> MCP Apps</b>.</p>
+
+Note: this is the hinge slide into the MCP UI / MCP Apps part. Do not name the libraries yet — name the two *problems* first, so the tools land as answers.
+
+
+---
+
 ## Enough theory. What's next?
 
-1. How a GenUI framework work.
-2. Then we build it: **MCP**, **MCP UI**, **MCP Apps**.
+1. CLIENT: Use GenUI framework .
+2. SERVER: **MCP Apps**.
 
