@@ -767,3 +767,21 @@ One prop more than before — and it is the whole architecture.
 - every widget starts from a clean `document.write()`, never a recycled one
 
 Note: this is today's simplification trade-off. The earlier version used a nested iframe (`srcdoc`) inside the proxy, so the proxy itself survived multiple tool calls and only the inner iframe got swapped. Here that reuse is lost, but you gain a ~20-line file readable in a single slide — and that's exactly what a live demo needs, where every tool call is already a fresh `<AppRenderer key={callId}>` anyway.
+
+---
+
+## Recap
+
+Three ways to put a component on screen. All three are **function calling** — what changes is who owns the pixels.
+
+| | **Tool + catalog** | **Hashbrown** | **MCP Apps / mcp-ui** |
+| --- | --- | --- | --- |
+| you write | one `FunctionDeclaration` per component | `exposeComponent()` + `uiChatResource()` | an MCP server: a tool **+** a `ui://` resource |
+| what travels | a component **name** + props | the same, streamed | `structuredContent` **+** the widget's HTML |
+| renders | your components, in your app | your components, in your app | a **cross-origin sandbox iframe** |
+| the UI can | anything — it *is* your code | anything — it *is* your code | only **ask** (`ui/*`) — the host decides |
+| the price | you build every component | your framework's runtime | someone else's design system |
+
+> The model never writes markup — in any of the three. <br /> And the data for the widget always travels **next to** the prose for the model.
+
+Note: la tabella che chiude la sezione. Le prime due colonne sono la stessa immagine — il modello sceglie fra componenti che hai scritto tu, fedeltà pixel perfect, niente da isolare perché non si attraversa nessun confine; Hashbrown ci mette sopra l'ergonomia Angular, lo streaming e i form in linguaggio naturale. La terza colonna è dove compare il confine: la UI arriva da un server che non controlli, quindi finisce in un iframe cross-origin, può solo *chiedere*, e il tuo host decide — ed è tutta lì la ragione per cui esistono `ui://`, il sandbox proxy e i messaggi `ui/*`. La riga da leggere ad alta voce è "the price": non esiste la colonna che vince, esiste quella che stai pagando. Scegli le prime due quando la UI è tua e vuoi il tuo design system; scegli la terza quando la UI è di qualcun altro e vuoi che funzioni in qualsiasi host senza che tu la scriva. E il blockquote è la frase da lasciare nella stanza: in nessuno dei tre casi il modello genera markup.

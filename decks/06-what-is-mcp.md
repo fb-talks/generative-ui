@@ -75,11 +75,11 @@ Note: the distinction that matters for later — **the model never talks to the 
 
 ## What a server exposes
 
-| PRIMITIVE | WHO DEVICES TO USE IT | EXAMPLE |
+| PRIMITIVE | EXAMPLE | WHO DECIDES TO USE IT |
 | --- | --- | --- |
-| **Tools** | the **model**, (i.e. Gemini) | `get_weather`, `fetch_data`, ... |
-| **Resources** | the **host** (i.e. the Client)  | a file, a record, `ui://…` |
-| **Prompts** | the **user**, explicitly | a slash command, a template |
+| **Tools** | `get_weather`, `fetch_data`, ... | the **model** (i.e. Gemini) |
+| **Resources** | a file, a record, `ui://…` | the **host** (i.e. the Client) |
+| **Prompts** | a slash command, a template | the **user**, explicitly |
 
 > Keep **resources** in mind, they come back soon with MCP Apps / MCP UI
 

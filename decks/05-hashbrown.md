@@ -219,7 +219,7 @@ Note: on top, an ordinary Angular component — nothing AI about it, it existed 
 
 ## `exposeComponent` #2: A Map component
 
-```ts [5-8]
+```ts [1-2|4|5-8]
 export const uiLeafletComponent = exposeComponent(
   LeafletComponent,
   {
@@ -300,7 +300,7 @@ Note: note the `@empty` block. Every exposed component must render half-empty an
 
 ## Tools: letting the model fetch
 
-```ts [2|3|4-7|8-12]
+```ts [1|2|3|4-7|8-12]
 export const fetchPropertiesTool = createTool({
   name: 'fetchProperties',
   description: 'Fetch real estate properties, optionally filtered by city',
@@ -446,7 +446,7 @@ Note: one input, no filters, no facets. "Show me the properties in Milan under 4
 
 ## Client configuration
 
-```ts [4-7|5|6]
+```ts [4-7]
 export const appConfig: ApplicationConfig = {
   providers: [
     // ...
@@ -466,7 +466,7 @@ Note: `emulateStructuredOutput` is the compatibility switch: models without nati
 
 ## The server side
 
-```ts [1|7|8-11|13|15-17]
+```ts
 import { HashbrownGoogle } from '@hashbrownai/google';
 import express from 'express';
 
@@ -565,14 +565,6 @@ Note: `input` is a **signal** — when `submittedText` changes the completion re
 No AI in the template. Just a signal holding a typed object.
 
 Note: this is the punchline of the whole section. The generated part stops at the boundary; from here down it is an ordinary Angular form with ordinary validation. That is what "intelligence where it helps, nowhere it doesn't" means in practice.
-
----
-
-## Demo: all of it together
-
-<video src="assets/hashbrown/ChatDemo-RealEstate.mp4" controls muted playsinline preload="metadata" style="width: 78%; aspect-ratio: 1920 / 1080; display: block; margin: 0 auto;"></video>
-
-Note: same clip, now that every piece has a name. Point at them as they appear: `fetchProperties` is the tool call, the list is `uiPropertiesListComponent`, the map is `uiGoogleMapComponent`, the booking form is `uiBookVisitAndAppointment`. Nothing on screen is generated markup — it is all components that existed before the chat did.
 
 ---
 

@@ -21,7 +21,7 @@ section: About
   <h1>Fabio Biondi</h1>
   <ul>
     <li>Freelance</li>
-    <li>Front-end <strong>Instructor</strong></li>
+    <li>AI Gen & Front-end <strong>Training for teams</strong></li>
     <li><strong>Google Expert (Angular)</strong></li>
     <li><strong>LearnByDo.ing</strong> creator</li>
     <li><strong>Speaker</strong> &amp; Content Creator</li>

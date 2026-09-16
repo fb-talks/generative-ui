@@ -60,10 +60,10 @@ Note: this is the single slide that explains the whole idea. Same information, s
 
 ---
 
-<!-- demo: https://stage.mokup.dev/embed/95ff8eab-3c34-4eaf-9f53-e263ee1c6062 -->
+<!-- demo: https://www.mokup.dev/embed/95ff8eab-3c34-4eaf-9f53-e263ee1c6062 -->
 
 <div class="mockup-frame">
-  <iframe src="https://stage.mokup.dev/embed/95ff8eab-3c34-4eaf-9f53-e263ee1c6062" width="800" height="500" style="border:0;" allowfullscreen></iframe>
+  <iframe src="https://www.mokup.dev/embed/95ff8eab-3c34-4eaf-9f53-e263ee1c6062" width="800" height="500" style="border:0;" allowfullscreen></iframe>
 </div>
 
 Note: same chat, same question, same data. On the left the model answers with a paragraph; on the right it answers with an interface. Scroll the mockup live if the room wants to see the rest — everything after this slide is about how the right-hand side is built.

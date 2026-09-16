@@ -8,9 +8,11 @@ section: MCP UI (short)
 
 When a tool answers with an **interface** instead of text.
 
-*Introduction / Short version*
+*Short Introduction*
 
-Note: this is the condensed run of the MCP UI section. Everything here comes back in far more detail in the long version — if the slot is generous, skip this and go straight to it. Say the title out loud once: "MCP UI" is both the generic idea and the name of a library, and the next slides untangle the two.
+Note: SHORT VERSION
+
+this is the condensed run of the MCP UI section. Everything here comes back in far more detail in the long version — if the slot is generous, skip this and go straight to it. Say the title out loud once: "MCP UI" is both the generic idea and the name of a library, and the next slides untangle the two.
 
 ---
 
@@ -111,6 +113,10 @@ Note: spec vs library, like the DOM and jQuery — if mcp-ui disappeared you wou
 
 ---
 
+# MCP UI: Server
+
+---
+
 ## The server: three steps, one file
 
 ```ts [1-2|4-8|10-12|14-22]
@@ -164,8 +170,8 @@ No build, no framework, no bundler.
   const app = new App({ name: "hello-widget", version: "1.0.0" });
 
   // the model's arguments first, then the server's structuredContent
-  app.addEventListener("toolinput", (i) => updateTile(i?.arguments?.name));
-  app.addEventListener("toolresult", (r) => updateTile(r?.structuredContent?.name));
+  app.addEventListener("toolinput", (i) => setTitle(i?.arguments?.name));
+  app.addEventListener("toolresult", (r) => setTitle(r?.structuredContent?.name));
 
   // listeners BEFORE connect() — from here on the host pushes the data
   await app.connect();
@@ -188,11 +194,17 @@ The handshake is the part to insist on: the host mounts the iframe but sends not
 
 ---
 
+# MCP UI: Client 
+## Your App in Angular, React, Vanilla JS, ...
+## or Claude Desktop, ChatGPT or any other client that supports MCP Apps
+
+---
+
 ## First: what is `client`?
 
 The **host** is our React app. The `client` is one object inside it: **one connection to one server**.
 
-```ts [1|3-6|8|10]
+```ts [1|3-6|8-10]
 import { UI_EXTENSION_CAPABILITIES } from "@mcp-ui/client";
 
 const client = new Client(
@@ -211,9 +223,10 @@ Note: the words collide, so say it out loud — **host** is the app (it owns the
 
 ---
 
-## The host: the model decides
+## Use the MCP with Gemini
 
-1. calls the tool → 2. sees `_meta.ui.resourceUri` → 3. `resources/read` → 4. mounts it in a sandboxed iframe
+The host: the model decides with tool it should use
+
 
 ```ts [1|3-4|6]
 const ai = new GoogleGenAI({ apiKey });
@@ -221,7 +234,7 @@ const ai = new GoogleGenAI({ apiKey });
 const chat = ai.chats.create({
   model: "gemini-3.8-flash",
   config: {
-    tools: [mcpToTool(client)],
+    tools: [mcpToTool(client), /* other tools */, ...],
   },
 });
 ```
@@ -264,7 +277,7 @@ Note:
 
 ---
 
-## The sandbox
+## AppRender & Sandbox
 
 `AppRenderer` doesn't put the widget into the page: it mounts an iframe pointing at a **proxy**.
 
@@ -295,7 +308,6 @@ const SANDBOX = {
 - `sandbox_proxy.html`: simple **HTML page**, ~20 lines
 - it is served from the **server's origin** (`:3010`), not the app's — *that* is what isolates it
 - no cookies, no storage, no host DOM reachable: only `postMessage`
-
 
 Note: people expect the sandbox to be heavy machinery and it is an empty page. The isolation is in the URL, not in the code. One consequence worth stating: after the write, the proxy *is* the widget — it talks to the host directly, with no relay in between. And to close the loop with the previous slide: `toolData.result` **is** the `toolResult` of the loop, the same object, not a copy — `setToolData` put it in state, React re-renders, `AppRenderer` sees the prop go from `undefined` to that object and pushes it into the iframe. On the previous slide, watch the two names: `result` is Gemini's answer, `toolResult` is the MCP server's. The two props map one to one onto the two `setToolData` of the loop: after ① only `toolInput` is filled and the widget gets `toolinput`; after ② `toolResult` arrives too and the widget gets `toolresult`. Trimmed off the slide, but in the demo: `key={toolData.callId}`, which is what makes a new tool call remount a fresh proxy, and the `onMessage` / `onSizeChanged` / `onFallbackRequest` handlers, which are the next slide's subject.
 
@@ -363,3 +375,27 @@ All three are **function calling**. What changes is who owns the pixels.
 > And in all three the model **never writes markup**: it picks a tool, you render — with the data for the UI travelling next to the prose for the model.
 
 Note: this is the map of the whole talk, worth two minutes even if you are running late. Say the first line out loud, because it is what people get wrong: this is not "tool calling vs. something else" — every row is a tool call, the same `functionCall` we saw in the loop, and in row one the component name *is* the tool (one tool per component, back in the Generative UI section). What the tool **returns** is the whole difference. Read the table top to bottom as *the same idea across three trust boundaries*, not as three competing libraries. Rows one and two are the same picture — the model chooses among components you wrote, so fidelity is pixel perfect and there is nothing to isolate; Hashbrown just gives you the Angular ergonomics, streaming and natural-language forms on top. Row three is where the boundary appears: the UI comes from a server you do not control, so it lands in a cross-origin iframe, it can only *ask*, and your host decides. That is the whole reason `ui://`, the sandbox proxy and the `ui/*` messages exist. And the constant in the blockquote is the sentence to leave in the room: no generated markup, ever — a name plus props, or a tool call plus a widget the host chose to mount. Everything else in this talk is plumbing around that.
+
+---
+
+## Not the only game in town
+
+Same problem, different bets — and **none of them is finished**.
+
+| | who | the bet |
+| --- | --- | --- |
+| **A2UI** <br /> <span style="font-size:0.8em">a2ui.org</span> | Google + CopilotKit | **declarative JSON**, streamed: the agent describes the UI, the host renders it with its **own native components** from a pre-approved catalog — no iframe, no code to execute |
+| **Open UI** <br /> <span style="font-size:0.8em">openui.com</span> | Thesys | same idea in **markup instead of JSON** — fewer tokens, one payload rendered in React, Vue, Svelte, React Native |
+| **AG-UI** <br /> <span style="font-size:0.8em">ag-ui.com</span> | CopilotKit | *not* a UI format: the **channel** — streaming, events, shared state between agent and frontend |
+
+> They compose more than they compete: **MCP** moves the tools, **A2UI** or **MCP Apps** describe the pixels, **AG-UI** carries the stream.
+
+<p class="fragment">A2UI is at <code>0.9</code>, MCP Apps is still an SEP — and Google's own post is called <i>“A2UI <b>and</b> MCP Apps”</i>.</p>
+
+Note: novanta secondi, non un confronto feature-by-feature — il punto è solo che nessuno esca da qui pensando che mcp-ui sia l'unica strada. La riga che conta è la prima: A2UI è l'altra metà della stessa domanda, "chi possiede i pixel", risolta al contrario rispetto a MCP Apps — invece di mandare HTML in un iframe, l'agente manda una *descrizione* e l'host la rende con i propri componenti nativi. Design coerente e niente codice da eseguire, in cambio di un catalogo fisso: puoi disegnare solo quello che l'host già conosce. Open UI è la stessa scommessa con un formato più compatto, AG-UI non è nemmeno in gara — è il trasporto, quello che sta sotto a tutti gli altri. E il finale: Google ha pubblicato un post che si intitola "A2UI **and** MCP Apps" con tre pattern di integrazione (A2UI su MCP, MCP Apps dentro A2UI, A2UI dentro MCP Apps) — quindi nemmeno chi li ha scritti li considera alternative. Se qualcuno chiede "e allora su cosa punto?": oggi MCP Apps è l'unico che gira dentro un host reale che tutti hanno già installato.
+
+---
+
+# Thank You!
+* ## _fabiobiondi.dev_
+* ## *learnbydo.ing*

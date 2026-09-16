@@ -278,7 +278,7 @@ Three things travel to the model: the **name**, the **description**, the **schem
 ```
 
 
-<blockquote class="fragment">An <b>MCP tool</b> is declared with these same three fields: it just spells <code>parameters</code> as <code>inputSchema</code>.</blockquote>
+<blockquote class="fragment">TIP: an <b>MCP tool</b> is declared with these same three fields: it just spells <code>parameters</code> as <code>inputSchema</code>.</blockquote>
 
 Note: the same tool as the previous slide, cut down to the bone — three fields, one comment each. Read the three comments out loud in order and the whole mechanism is on screen at once; this is the slide to photograph.
 
@@ -299,7 +299,7 @@ const ai = new GoogleGenAI({ apiKey });
 
 const res = await ai.models.generateContent({
   model: 'gemini-3.8-flash',
-  contents: 'Introduce Ada Lovelace, and tell me how much we sold in 2024.',
+  contents: 'Introduce Ada Lovelace, and tell me how much we sold in 2024.', // User Prompt
   config: {
     systemInstruction:
       'You are a UI generator. Call the tools that best answer the request. ' +
@@ -369,20 +369,20 @@ Se c'è tempo, il chip "compare 2023 and 2024 sales for shoes": due tool call, d
 
 How much of the interface do you hand to the model?
 
-| level | the model returns | you render | control **you** keep | generative UI? |
+| level | the model returns | you render | **UI** determinism | generative UI? |
 | --- | --- | --- | --- | --- |
-| 0 | plain text | `<p>` | total | no |
-| 1 | Markdown | a markdown component | total | no |
-| 2 | structured data | a component *you* chose | high | **yes** — wired by hand |
-| 3 | **which** component + props | your catalog | high | **yes** |
-| 4 | a **composition** of components | your catalog, nested | medium | **yes** |
-| 5 | code, run in a sandbox | a JS runtime in the browser | low | yes — and a sandbox |
+| 0 | plain text | `<p>` | total: the shape, not the words | no |
+| 1 | Markdown | a markdown component | total: the shape, not the words | no |
+| 2 | structured data | a component *you* chose | high: fixed layout, schema-checked data | **yes**: wired by hand |
+| 3 | **which** component + props | your catalog | high: finite, known set | **yes** |
+| 4 | a **composition** of components | your catalog, nested | medium: layout emerges at runtime | **yes** |
+| 5 | code, run in a sandbox | a JS runtime in the browser | none: unknown until it runs | yes: plus a sandbox |
 
-> More **adaptivity** = less **determinism**.
+> More **adaptivity** = less **predictable UI**.
 
-<p class="fragment"><b>2, 3 and 4 are all generative UI.</b> At 2 the model already decides the content, you just wire the component by hand. From 3 on, that last decision moves too.  <b>3–4</b>.</p>
+<p class="fragment"><b>2, 3 and 4 are all generative UI.</b> At 2 the model already decides the content, you just wire the component by hand.</p>
 
-Note: this table is my answer to "is X generative UI?" — usually yes, at some level. Also a gentle way to tell people they can start at level 2 tomorrow without a framework. On the last column, say whose control it is: at 3 the model picks the component but only from your catalog, with props validated by your schema — that is why it is still "high". At 4 the pieces are still yours, but the overall layout emerges at runtime and nobody designed it. At 5 you do not know in advance what will appear, and isolation is the only defence left. Everything we build today lives at 3–4.
+Note: this table is my answer to "is X generative UI?" — usually yes, at some level. Also a gentle way to tell people they can start at level 2 tomorrow without a framework. Read the determinism column top to bottom — it is the same sentence as the line under the table. Say out loud *which* determinism it is, because someone will object: the column is about the **shape** on screen, not about the content. On content the first rows are actually the worst — level 0 is free prose, level 2 is JSON validated against your schema — so the two axes cross: from 0 to 2 the content gets *more* predictable, from 2 to 5 the layout gets less. At 3 the model picks the component but only from your catalog, with props validated by your schema, so the same question gives you the same screen — that is why it is still "high". At 4 the pieces are still yours, but the overall layout emerges at runtime and nobody designed it. At 5 you do not know in advance what will appear, and isolation is the only defence left. Everything we build today lives at 3–4.
 
 **Livello 5 — cos'è.** Il modello non sceglie un componente dal catalogo: scrive **codice** (tipicamente un componente React/JS o HTML+JS autonomo) che viene eseguito nel browser dell'utente al momento. È il livello degli Artifacts di Claude, del Canvas di ChatGPT o di v0: nessuno ha predichiarato quel componente, non esiste nel repo, viene alla luce per quella singola domanda.
 
@@ -464,8 +464,8 @@ Note: common beginner mistake: treating the generated tree as state and re-askin
 - **evaluation**: "is this UI good?" is not a unit test. You need human review.
 - **fallbacks**: what renders when the model picks nothing? Always ship a prose fallback.
 - **latency budget**: a tool call + a UI generation is seconds, not milliseconds. Design for it.
-- **accessibility**: generated ≠ exempt. Your components carry the a11y contract.
-- **i18n**: the model will happily answer in the wrong language. Pin it in the system prompt.
+- **accessibility**: Your components carry the a11y contract.
+- **i18n**: the model can answer in the wrong language. Pin it in the system prompt.
 - **cost**: every render is tokens. Cache aggressively; not every screen deserves a model.
 
 Note: ACCESSIBILITY
