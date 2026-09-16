@@ -32,3 +32,13 @@ section: About
 </div>
 
 Note: thirty seconds, no more. The credentials matter only to say why I spent the last months inside this protocol.
+
+---
+
+<!-- demo: https://www.building-ai.app -->
+
+## Live demo
+
+<iframe src="https://www.building-ai.app" style="width:100%;height:60vh"></iframe>
+
+## New slide
