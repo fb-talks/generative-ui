@@ -4,6 +4,7 @@ title: Hashbrown
 section: Hashbrown
 ---
 
+<!-- demo: https://hashbrown.dev/ -->
 # Hashbrown
 
 **Build agents that run in the browser** — [hashbrown.dev](https://hashbrown.dev)
@@ -438,7 +439,8 @@ Note: plain chat shell, no widgets of its own. Everything that appears below the
 
 ## Demo: real estate agent
 
-<img src="assets/hashbrown/demo-real-estate.png" alt="Real estate agent demo: a single natural-language search box" style="width: 88%; display: block; margin: 0 auto;">
+<video src="assets/3.DashboardDemo.mp4" controls muted playsinline preload="metadata"
+  style="width: 78%; aspect-ratio: 16 / 9;"></video>
 
 Note: one input, no filters, no facets. "Show me the properties in Milan under 400k with a garden" — that sentence would be six form controls in a classic UI, and nobody would use five of them.
 

@@ -160,7 +160,7 @@ Result:
 ```json
 [
   { 
-    "component": "UserCard",
+    "name": "UserCard",
     "props": {
        "name": "Ada Lovelace", 
        "role": "Mathematician",
@@ -248,7 +248,7 @@ Result:
 ```json
 [
   { 
-    "component": "SalesReport",
+    "name": "SalesReport",
     "props": { 
       "year": 2024,
       "category": "shoes"
@@ -318,7 +318,9 @@ const ui = (res.functionCalls ?? []).map(
 );
 ```
 
-The model does not return a UI. It returns **which of your functions to call, and with what arguments** — several of them, if the question needs several.
+The model does not return a UI. 
+
+It returns **which of your functions (one or many) to call, and with what arguments**.
 
 Note: two things to point at. `mode: ANY` is the whole trick — it forbids prose, so the answer is always a UI. And `res.functionCalls` is a *list*: this is the jump from "the model picks a component" (level 3) to "the model composes a screen" (level 4) and it costs exactly one line of code. Say that the SDK already validated the arguments against the schema before handing them to me — if the model invents a prop, I never see it.
 
@@ -366,8 +368,6 @@ Se c'è tempo, il chip "compare 2023 and 2024 sales for shoes": due tool call, d
 ---
 
 ## Six levels of outputs
-
-How much of the interface do you hand to the model?
 
 | level | the model returns | you render | **UI** determinism | generative UI? |
 | --- | --- | --- | --- | --- |
@@ -530,7 +530,7 @@ Note: last one matters most and it is the one people forget: this is a tool for 
 | 1. the model _composes_ **your own** components | 1. a third party _ships the data_ **and** _its UI_, in a sandbox |
 | 2. full design-system fidelity | 2. the server team owns its own UX |
 | 3. you own your state, UI, your tests | 3. isolation, trust and consent become **protocol** problems |
-| 4. you control everything, and you must build everything | 4. interop: any host |
+| 4. you control everything | 4. interop: any host |
 | GOAL: _"Pixel Perfect"... in your app_ 🥳 | GOAL: _Goog Enough, everywhere_ 😅 |
 
 <p class="fragment">Same idea, two approaches. The second one is <b> MCP Apps</b>.</p>

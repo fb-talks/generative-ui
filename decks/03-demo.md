@@ -7,7 +7,7 @@ section: Demo
 
 ## Every screen you have ever shipped…
 
-# …was designed **before** you knew the question
+# …was designed **before** and then added to your app
 
 Note: ask the room: how many screens in your app exist only because of one edge case? The filter panel nobody uses. The 12 tabs. The dashboard with 40 widgets because we could not decide which 6 mattered.
 
@@ -16,7 +16,7 @@ Note: ask the room: how many screens in your app exist only because of one edge 
 
 ## The problem we actually have
 
-- We design **one UI for every user**, then hide 90% of it behind filters, tabs and menus
+- We design *one UI for every user*, then hide 90% of it behind filters, tabs and menus
 - Every new use case = a new screen, a new route, a new sprint
 - The user knows what they want: they just can't **say** it to a form
 - Search boxes often return links. Dashboards return everything. Neither returns *an answer*

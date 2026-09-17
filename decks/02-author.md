@@ -17,21 +17,41 @@ section: About
   
 </div>
 
+
+
 <div class="author-bio">
   <h1>Fabio Biondi</h1>
   <ul>
     <li>Freelance</li>
-    <li>AI Gen & Front-end <strong>Training for teams</strong></li>
-    <li><strong>Google Expert (Angular)</strong></li>
-    <li><strong>LearnByDo.ing</strong> creator</li>
+    <li>AI Gen & Front-end <strong>Training for Teams</strong></li>
+    <li><strong>Google Developer Expert (Angular)</strong></li>
     <li><strong>Speaker</strong> &amp; Content Creator</li>
     <li><strong>Community</strong> Founder</li>
+    <li><strong>LearnByDo.ing</strong> creator</li>
   </ul>
+
   <p class="author-stack">Main Skills: TypeScript · Angular · React · Next.js · Gemini · Claude</p>
   <p class="author-meta">❤️ MTB · Snowboard · Tennis · Skate — <strong>FabioBiondi.dev</strong></p>
+
+
+<br />
+
+## _fabiobiondi.dev_
+
 </div>
 
 Note: thirty seconds, no more. The credentials matter only to say why I spent the last months inside this protocol.
+
+---
+
+<!-- demo: https://www.learnbydo.ing/ -->
+
+## Live demo
+
+
+<iframe src="https://www.learnbydo.ing/" style="width:100%;height:60vh"></iframe>
+
+## New slide
 
 ---
 
