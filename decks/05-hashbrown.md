@@ -517,7 +517,7 @@ Note: paste — or dictate — a messy sentence on the left, get typed fields on
 
 ## The schema is the form
 
-```ts [1|2-3|8]
+```ts
 const CONTACT_FORM_SCHEMA = s.object('Structured contact form data', {
   firstName: s.string('First name of the person'),
   lastName: s.string('Last name of the person'),
@@ -535,10 +535,11 @@ Note: `s.enumeration` is the one to point at — the model cannot answer "urgent
 
 ## `structuredCompletionResource`
 
-```ts [1|2|3|4-10|11|14]
+```ts 
 completion = structuredCompletionResource({
   model: 'gemini-2.5-flash',
-  input: this.submittedText,
+  // your prompt. I.e.:
+  input: 'My name is Fabio and my email is **. I need support for.... ', 
   system: `
     You are a form parser.
     Extract structured contact form data from the user's natural language message.
