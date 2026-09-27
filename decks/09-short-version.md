@@ -1,7 +1,7 @@
 ---
 marp: true
-title: Generative UI — SHORT VERSION
-section: SHORT VERSION
+title: Generative UI — GEN UI TALK
+section: GEN UI TALK
 ---
 
 <div class="cols" style="--cols-align: center">
@@ -122,6 +122,14 @@ Note: this is the single slide that explains the whole idea. Same information, s
 
 ---
 
+<!-- demo: https://www.mokup.dev/embed/95ff8eab-3c34-4eaf-9f53-e263ee1c6062 -->
+
+<div class="mockup-frame">
+  <iframe src="https://www.mokup.dev/embed/95ff8eab-3c34-4eaf-9f53-e263ee1c6062" width="800" height="500" style="border:0;" allowfullscreen></iframe>
+</div>
+
+---
+
 ## Demo Hashbrown: generated dashboard
 
 <video src="assets/hashbrown/DashboardDemo6.mp4" controls muted playsinline preload="metadata" style="width: 80%; aspect-ratio: 1920 / 1080; display: block; margin: 0 auto;"></video>
@@ -203,78 +211,6 @@ Note: walk it slowly, arrow by arrow. The two things to point at: step 2 (we sen
 
 ---
 
-## Start from the components you already have
-
-
-```tsx
-<UserCard name="Valentino Rossi" role="Rider" skills={['MotoGP', 'GT racing', 'VR46']} />
-```
-
-```tsx
-// A simple card with "name", "role" and a "skills" list
-export type UserCardProps = { name: string; role: string; skills: string[] };
-
-export function UserCard({ name, role, skills }: UserCardProps) {
-  return (
-    <div className="card">
-      <h3>{name}</h3>
-      <p>{role}</p>
-      <ul>
-        {skills.map((s) => <li key={s}>{s}</li>)}
-      </ul>
-    </div>
-  );
-}
-```
-
-No AI import, no base class, no decorator. 
-
-A component you wrote months ago, styled and tested before any model existed.
-
-Note: start here on purpose — the room needs to see that nothing about this component is special before I claim a model can assemble it. No decorator, no base class, no `data` envelope: it is the same `UserCard` that is already in your design system, and it was written, reviewed and tested long before any of this.
-
-`UserCard` is deliberately the easy case: props in, pixels out. Whatever is in `name` is what appears in the `<h3>`.
-
-End on the call site, because it is the hinge of the whole section: today *you* type that line, at build time, for a page you designed in advance. Nothing about the component is going to change in the next slide — the only thing that changes is **who writes that line, and when**. Hold that thought — two slides from now there is a component that does not work like this, and the difference is the whole point of the section.
-
----
-
-## One tool for every component
-
-```ts [1|3|4|5-13]
-const tools: FunctionDeclaration[] = [
-  {
-    name: 'UserCard',
-    description: 'Introduce a person: name, role and a few skills',
-    parameters: {
-      type: Type.OBJECT,
-      properties: {
-        name: { type: Type.STRING },
-        role: { type: Type.STRING },
-        skills: { type: Type.ARRAY, items: { type: Type.STRING } },
-      },
-      required: ['name', 'role', 'skills'],
-    },
-  },
-  // …one entry per component in the catalog
-];
-```
-
-> The `description` is the only manual the model gets: <br />
-the schema can enforce that `name` and `role` are string, `skills` is an array of string and so on...
-
-
-<blockquote class="fragment">The <code>parameters</code> schema is simply <code>UserCardProps</code> (see previous slide).</blockquote>
-
-
-
-
-Note: walk the three steps of the highlight: the name is the one the model will call back, the description is how it decides, the schema is what it is allowed to send. Nothing here is framework magic — it is a plain object literal that happens to be shipped to a model.
-
-The fragment is the reason `UserCard` came first: schema and props are the same three fields, so the declaration reads like the TypeScript type written twice. Every generative-UI tutorial you will find stops here. Say that out loud, then turn the page — because the interesting component is the one that does *not* work like this.
-
----
-
 ## Another component... that fetches data
 
 ```tsx
@@ -332,6 +268,9 @@ const tools: FunctionDeclaration[] = [
 ```
 
 
+
+<blockquote class="fragment">TIP: an <b>MCP tool</b> is declared with these same three fields: it just spells <code>parameters</code> as <code>inputSchema</code>.</blockquote>
+
 Note: this is the second half of the previous slide, so open by pointing at the shape: same three fields, same array, and yet the schema has *shrunk*. `UserCard` declared everything it renders; this one declares two values and produces a whole report.
 
 The size of a tool's schema is not the size of its UI — and that is a decision you make when you write it, not something the model gets to choose. Say the sentence that sums up the whole section: **the model is picking the query, not answering it.**
@@ -340,40 +279,9 @@ Then set up the next slide: everything that makes this tool safe is in the four 
 
 ---
 
-## Three fields
-
-Three things travel to the model: the **name**, the **description**, the **schema of the props**.
-
-```ts [2|3|4-8]
-{
-  name: 'ToolName',       // WHICH component: the model sends this name back
-  description: '....',    // WHEN to reach for it: prose, and the field that decides
-  parameters: {           // WHAT it may send you: and nothing outside this
-    type: Type.OBJECT,
-    properties: { ... },
-    required: [],
-  },
-}
-```
-
-
-<blockquote class="fragment">TIP: an <b>MCP tool</b> is declared with these same three fields: it just spells <code>parameters</code> as <code>inputSchema</code>.</blockquote>
-
-Note: the same tool as the previous slide, cut down to the bone — three fields, one comment each. Read the three comments out loud in order and the whole mechanism is on screen at once; this is the slide to photograph.
-
-The `description` field is the highest-leverage text in the entire system. Vague description, wrong component. I have wasted whole afternoons on this.
-
-That last sentence is there because of a real failure, and it is worth confessing on stage. The catalog also contains a generic `BarChart` that takes `{ label, value }[]`. Without that line the model answers "how much did we sell in 2024?" by calling `BarChart` with twelve plausible, confident, entirely invented numbers. It looks perfect. It is fiction. One sentence of prose moved it to the tool that actually knows.
-
-Point at the split: `enum` and `required` are what the SDK can check — if the model sends `category: 'hats'` I never see the call. The sentences here are what only the model can honour, and no amount of JSON Schema will express them.
-
-Then land the fragment and move on — do not explain MCP yet. It is only a hook: when `tools/list` shows up later, the room should recognise the shape instead of learning it.
-
----
-
 ## Configure tools (in Gemini SDK)
 
-```ts [1,3,4|5|7-9|10|14-17]
+```ts [1,3,4|5|7-9|10]
 const ai = new GoogleGenAI({ apiKey });
 
 const res = await ai.models.generateContent({
@@ -386,16 +294,18 @@ const res = await ai.models.generateContent({
     tools: [{ functionDeclarations: tools }]
   }
 });
+```
 
+
+
+```ts
 // one function call per tool 
 const ui = (res.functionCalls ?? []).map(
   (call) => ({ component: call.name, props: call.args }) as UISpec,
 );
+// output: [{ component: 'SalesReport', props: { ... } }, ]
 ```
-
-The model does not return a UI. 
-
-It returns **which of your functions (one or many) to call, and with what arguments**.
+<!-- .element: class="fragment" -->
 
 Note: two things to point at. `mode: ANY` is the whole trick — it forbids prose, so the answer is always a UI. And `res.functionCalls` is a *list*: this is the jump from "the model picks a component" (level 3) to "the model composes a screen" (level 4) and it costs exactly one line of code. Say that the SDK already validated the arguments against the schema before handing them to me — if the model invents a prop, I never see it.
 
@@ -437,54 +347,6 @@ Note: this is the code from the last four slides, running. Type the prompt, then
 **Il secondo prompt è quello che vale il biglietto.** `SalesReport` è l'unico componente del catalogo che *non* riceve i dati: riceve un anno e, al massimo, una categoria. I numeri se li va a prendere da solo, con una `fetchSales(year, category)` che finge di essere una query. Guarda il pannello JSON mentre lo dici: il modello ha restituito `{ "year": 2024 }` e nient'altro — il fatturato che vedi sul grafico non è mai passato dall'LLM, quindi non può essere allucinato e la stessa domanda restituisce sempre gli stessi numeri. È la differenza fra "il modello *scrive* la UI" e "il modello *sceglie* la UI e i suoi parametri". Nella `description` del tool c'è la frase che lo rende affidabile: *"send ONLY the year: the component queries the database itself"* — di nuovo, la prosa che fa da guardrail, come tre slide fa.
 
 Se c'è tempo, il chip "compare 2023 and 2024 sales for shoes": due tool call, due componenti, due query separate. Stesso pipeline, zero righe di codice in più.
-
----
-
-## Six levels of outputs
-
-| level | the model returns | you render | **UI** determinism | generative UI? |
-| --- | --- | --- | --- | --- |
-| 0 | plain text | `<p>` | total: the shape, not the words | no |
-| 1 | Markdown | a markdown component | total: the shape, not the words | no |
-| 2 | structured data | a component *you* chose | high: fixed layout, schema-checked data | **yes**: wired by hand |
-| 3 | **which** component + props | your catalog | high: finite, known set | **yes** |
-| 4 | a **composition** of components | your catalog, nested | medium: layout emerges at runtime | **yes** |
-| 5 | code, run in a sandbox | a JS runtime in the browser | none: unknown until it runs | yes: plus a sandbox |
-
-> More **adaptivity** = less **predictable UI**.
-
-<p class="fragment"><b>2, 3 and 4 are all generative UI.</b> At 2 the model already decides the content, you just wire the component by hand.</p>
-
-Note: this table is my answer to "is X generative UI?" — usually yes, at some level. Also a gentle way to tell people they can start at level 2 tomorrow without a framework. Read the determinism column top to bottom — it is the same sentence as the line under the table. Say out loud *which* determinism it is, because someone will object: the column is about the **shape** on screen, not about the content. On content the first rows are actually the worst — level 0 is free prose, level 2 is JSON validated against your schema — so the two axes cross: from 0 to 2 the content gets *more* predictable, from 2 to 5 the layout gets less. At 3 the model picks the component but only from your catalog, with props validated by your schema, so the same question gives you the same screen — that is why it is still "high". At 4 the pieces are still yours, but the overall layout emerges at runtime and nobody designed it. At 5 you do not know in advance what will appear, and isolation is the only defence left. Everything we build today lives at 3–4.
-
-**Livello 5 — cos'è.** Il modello non sceglie un componente dal catalogo: scrive **codice** (tipicamente un componente React/JS o HTML+JS autonomo) che viene eseguito nel browser dell'utente al momento. È il livello degli Artifacts di Claude, del Canvas di ChatGPT o di v0: nessuno ha predichiarato quel componente, non esiste nel repo, viene alla luce per quella singola domanda.
-
-**Quando serve davvero.** Nel nostro esempio e-commerce il catalogo copre chart, lista prodotti e form. Ma se l'utente chiede *"fammi uno scatter plot margine/unità vendute del trimestre, evidenzia gli SKU sotto l'8% di margine"*, nessuno dei tre componenti lo sa fare. Al livello 3–4 il modello può solo scegliere il chart più vicino e sbagliare; al livello 5 scrive il componente su misura:
-
-```jsx
-export default function MarginReport({ data }) {
-  const low = data.filter(d => d.margin < 0.08);
-  return (
-    <>
-      <h2>Margin vs units — Q3</h2>
-      <Scatter points={data} highlight={low} />
-      <p>{low.length} SKUs below 8%</p>
-    </>
-  );
-}
-```
-
-**Come funziona in pratica.** Il punto cruciale è che quel codice non lo esegui mai nella tua pagina. Il flusso è:
-
-1. Nel system prompt vincoli il formato: un solo componente autonomo, import consentiti solo da una lista bianca, niente accesso di rete, niente `window.parent`.
-2. Il modello streamma il sorgente come stringa.
-3. Lo passi a un **iframe cross-origin** con `sandbox="allow-scripts"` — deliberatamente senza `allow-same-origin`, così l'iframe finisce in un origin opaco e non può leggere i tuoi cookie, il tuo `localStorage` né il tuo DOM. Una CSP con `connect-src 'none'` gli toglie anche la rete.
-4. Dentro quell'iframe gira un transpiler (Babel standalone o esbuild-wasm) che compila il JSX ed esegue il risultato.
-5. I dati entrano e gli eventi escono **solo** via `postMessage`.
-
-Se questa architettura suona familiare è perché è esattamente il sandbox proxy che abbiamo già nel demo su `:3010`: iframe su origin diverso, comunicazione solo a messaggi. La differenza non è tecnica ma di **provenienza**: in MCP UI l'HTML lo ha scritto l'autore del server ed è predichiarato come resource `ui://` (quindi prefetchabile, cacheabile, revisionabile), mentre al livello 5 arriva dal modello, diverso a ogni chiamata. Stesso muro, minaccia diversa.
-
-**Il prezzo**, che è poi il motivo per cui non ci vai se non ti serve: emettere un componente costa centinaia di token invece di dieci (latenza e costo per ogni render), devi spedire al browser un runtime e un transpiler, non puoi scrivere test di regressione su una UI che cambia ogni volta, e l'accessibilità torna a essere una lotteria perché nessun design system la garantisce più.
 
 ---
 
@@ -556,7 +418,7 @@ Note: thirty seconds, then move on. One input, no filters — the model picks th
 
 ---
 
-## The chat resource
+## The chat resource (Angular v.22+)
 
 ```ts [2|3|4|5-9|10-14]
 export class App {
@@ -569,9 +431,9 @@ export class App {
       ... instructions here ...
     `,
     components: [
-      Component1Declaration,
-      Component2Declaration,
-      Component3Declaration,
+      googleMapDeclaration,
+      productListDeclaration,
+      chatMessageDeclaration,
     ],
   });
 }
@@ -614,27 +476,34 @@ chat.sendMessage({
 
 ## `exposeComponent` #1: a plain component
 
+<div class="cols">
+<div class="col">
+
 <div style="font-size: 0.8em; opacity: 0.75; margin: 0 0 0.4em;">An ordinary Angular component: nothing AI about it</div>
 
-```ts [1-9]
+```ts 
 @Component({
-  selector: 'app-simple-message',
+  selector: 'app-chat-message',
   template: `
     <div> {{ text() }} </div>
   `,
 })
-export class SimpleMessage {
+export class ChatMessage {
   text = input.required<string>();
 }
 ```
 
+</div>
+<div class="col">
+
 <div style="font-size: 0.8em; opacity: 0.75; margin: 0 0 0.4em;">The description the model reads</div>
 
-```ts [1-11|6|8]
-export const uiSimpleMessageComponent = exposeComponent(
-  SimpleMessage,
+```ts
+export const chatMessageDeclaration = exposeComponent(
+  ChatMessage,
   {
-    description: `Display a simple text response to the user`,
+    description:
+      `Display a simple text response to the user`,
     input: {
       text: s.string('The msg to display'),
       // or 
@@ -644,7 +513,10 @@ export const uiSimpleMessageComponent = exposeComponent(
 );
 ```
 
-Note: on top, an ordinary Angular component — nothing AI about it, it existed before. Below, the description the model reads. `description` is the manual; `input` maps one-to-one onto the component's signal inputs. `s.streaming.string` means the text renders token by token as it arrives instead of popping in at the end.
+</div>
+</div>
+
+Note: on the left, an ordinary Angular component — nothing AI about it, it existed before. On the right, the description the model reads. `description` is the manual; `input` maps one-to-one onto the component's signal inputs. `s.streaming.string` means the text renders token by token as it arrives instead of popping in at the end.
 
 ---
 
@@ -691,9 +563,6 @@ text: s.streaming.string('The description of the product'),
   </div>
 </div>
 
-<p class="fragment">The tree arrives <b>partial</b>. <br /> Your components must survive being rendered with half their inputs:<br /> skeletons, optional props, no crashes on <code>undefined</code>.</p>
-
-
 Note: concrete war story here: the first version I built waited for the full JSON. Same model, same latency, and it felt twice as slow. Streaming is not an optimization, it is the product.
 
 ---
@@ -723,6 +592,25 @@ Note: five minutes, just enough to have the same words. Whoever already writes M
 
 ---
 
+## The answer: one protocol in the middle
+
+```mermaid
+flowchart LR
+  A[Claude] --> P((MCP))
+  B[Gemini] --> P
+  C[Visual Studio Code] --> P
+  P --> X1[GitHub]
+  P --> X2[Postgres]
+  P --> X3[Your server]
+```
+
+Every host that speaks MCP can use it.
+
+- open standard, introduced by Anthropic at the end of 2024
+- SDKs in TypeScript, Python, Java, C#, …
+
+---
+
 ## What a server exposes
 
 | PRIMITIVE | EXAMPLE | WHO DECIDES TO USE IT |
@@ -741,43 +629,9 @@ Note: three primitives, three different owners. The confusion "resource = anythi
 
 When a tool answers with an **interface** instead of text.
 
-*Short Introduction*
-
 Note: SHORT VERSION
 
 this is the condensed run of the MCP UI section. Everything here comes back in far more detail in the long version — if the slot is generous, skip this and go straight to it. Say the title out loud once: "MCP UI" is both the generic idea and the name of a library, and the next slides untangle the two.
-
----
-
-## The answer: one protocol in the middle
-
-```mermaid
-flowchart LR
-  A[Claude] --> P((MCP))
-  B[Gemini] --> P
-  C[Visual Studio Code] --> P
-  P --> X1[GitHub]
-  P --> X2[Postgres]
-  P --> X3[Your server]
-```
-
-Every host that speaks MCP can use it.
-
-- open standard, introduced by Anthropic at the end of 2024
-- SDKs in TypeScript, Python, Java, C#, …
-- "the USB-C of AI applications" — the analogy is theirs, and it holds
-
----
-
-## What a server exposes
-
-| PRIMITIVE | EXAMPLE | WHO DECIDES TO USE IT |
-| --- | --- | --- |
-| **Tools** | `get_weather`, `fetch_data`, ... | the **model** (i.e. Gemini) |
-| **Resources** | a file, a record, `ui://…` | the **host** (i.e. the Client) |
-| **Prompts** | a slash command, a template | the **user**, explicitly |
-
-> Keep **resources** in mind, they come back soon with MCP Apps / MCP UI
 
 ---
 
@@ -876,6 +730,10 @@ Note: spec vs library, like the DOM and jQuery — if mcp-ui disappeared you wou
 
 ---
 
+# MCP UI: Server
+
+---
+
 ## The server: three steps, one file
 
 ```ts [1-2|4-8|10-12|14-22]
@@ -919,7 +777,7 @@ Note: three steps, three MCP primitives, nothing invented.
 
 No build, no framework, no bundler.
 
-```html [1|4-5|7|10-11|14]
+```html
 <div class="hw-title" id="hw-title">Hello, world!</div>
 
 <script type="module">
@@ -953,42 +811,6 @@ The handshake is the part to insist on: the host mounts the iframe but sends not
 
 ---
 
-## AppRender & Sandbox
-
-`AppRenderer` doesn't put the widget into the page: it mounts an iframe pointing at a **proxy**.
-
-<div class="cols">
-<div class="col">
-
-```tsx
-const SANDBOX = { 
-  url: new URL("http://localhost:3010/sandbox_proxy.html") 
-};
-
-<AppRenderer 
-  client={client} 
-  toolName={toolData.name}
-  toolInput={toolData.input}     // → toolinput  ①
-  toolResult={toolData.result}   // → toolresult ②
-  sandbox={SANDBOX} />
-```
-
-</div>
-<div class="col">
-
-<img src="assets/mockup-1789000441393-1x.png" alt="Three nested boxes: host app, sandbox iframe, widget" style="width: 230px; display: block; margin: 0 auto;" />
-
-</div>
-</div>
-
-- `sandbox_proxy.html`: simple **HTML page**, ~20 lines
-- it is served from the **server's origin** (`:3010`), not the app's — *that* is what isolates it
-- no cookies, no storage, no host DOM reachable: only `postMessage`
-
-Note: people expect the sandbox to be heavy machinery and it is an empty page. The isolation is in the URL, not in the code. One consequence worth stating: after the write, the proxy *is* the widget — it talks to the host directly, with no relay in between. And to close the loop with the previous slide: `toolData.result` **is** the `toolResult` of the loop, the same object, not a copy — `setToolData` put it in state, React re-renders, `AppRenderer` sees the prop go from `undefined` to that object and pushes it into the iframe. On the previous slide, watch the two names: `result` is Gemini's answer, `toolResult` is the MCP server's. The two props map one to one onto the two `setToolData` of the loop: after ① only `toolInput` is filled and the widget gets `toolinput`; after ② `toolResult` arrives too and the widget gets `toolresult`. Trimmed off the slide, but in the demo: `key={toolData.callId}`, which is what makes a new tool call remount a fresh proxy, and the `onMessage` / `onSizeChanged` / `onFallbackRequest` handlers, which are the next slide's subject.
-
----
-
 ## What the widget can ask for
 
 | call | effect |
@@ -1001,7 +823,81 @@ Note: people expect the sandbox to be heavy machinery and it is an empty page. T
 
 No DOM, no network, no model: everything the widget wants, it has to request.
 
-Note: each method has a matching `on…` prop on `AppRenderer` — `sendMessage` → `onMessage`, `openLink` → `onOpenLink`, and so on. The host handler is where the policy lives: an `if (!allowed(url))` there is the whole reason this is a request and not an action, and it is why you can embed a widget written by someone else. The handlers are `async` and return a value, so the widget gets an answer back.
+---
+
+# MCP UI: Client 
+## Your App in Angular, React, Vanilla JS, ...
+## or Claude Desktop, ChatGPT or any other client that supports MCP Apps
+
+---
+
+## In our React App...
+
+```ts
+import { UI_EXTENSION_CAPABILITIES } from "@mcp-ui/client";
+
+const client = new Client(
+  { name: "my-mcp-client", version: "1.0.0" },
+  { capabilities: { extensions: UI_EXTENSION_CAPABILITIES } },  // ← "I can render ui://"
+);
+
+const transport = new StreamableHTTPClientTransport(new URL("http://localhost:3010/mcp"));
+
+await client.connect(transport);   // from here on: listTools, callTool, readResource
+```
+
+### Use in Gemini
+
+```ts
+const ai = new GoogleGenAI({ apiKey });
+
+const chat = ai.chats.create({
+  model: "gemini-3.8-flash",
+  config: {
+    tools: [mcpToTool(client), /* other tools */, ...],
+  },
+});
+```
+
+---
+
+## AppRender & Sandbox
+
+`AppRenderer` doesn't put the widget into the page: it mounts an iframe pointing at a **proxy**.
+
+<div class="cols">
+<div class="col">
+
+```tsx
+// in a loop 
+<AppRenderer 
+  client={client} 
+  toolName={toolData.name}
+  toolInput={toolData.input}     // → toolinput  ①
+  toolResult={toolData.result}   // → toolresult ②
+  sandbox={SANDBOX} />
+```
+
+
+```tsx
+const SANDBOX = { 
+  url: new URL("http://localhost:3010/sandbox_proxy.html") 
+};
+```
+
+</div>
+<div class="col">
+
+<img src="assets/mockup-1789000441393-1x.png" alt="Three nested boxes: host app, sandbox iframe, widget" style="width: 100%; display: block; margin: 0 auto;" />
+
+</div>
+</div>
+
+- `sandbox_proxy.html`: simple **HTML page**, ~20 lines
+- it is served from the **server's origin** (`:3010`), not the app's — *that* is what isolates it
+- no cookies, no storage, no host DOM reachable: only `postMessage`
+
+Note: people expect the sandbox to be heavy machinery and it is an empty page. The isolation is in the URL, not in the code. One consequence worth stating: after the write, the proxy *is* the widget — it talks to the host directly, with no relay in between. And to close the loop with the previous slide: `toolData.result` **is** the `toolResult` of the loop, the same object, not a copy — `setToolData` put it in state, React re-renders, `AppRenderer` sees the prop go from `undefined` to that object and pushes it into the iframe. On the previous slide, watch the two names: `result` is Gemini's answer, `toolResult` is the MCP server's. The two props map one to one onto the two `setToolData` of the loop: after ① only `toolInput` is filled and the widget gets `toolinput`; after ② `toolResult` arrives too and the widget gets `toolresult`. Trimmed off the slide, but in the demo: `key={toolData.callId}`, which is what makes a new tool call remount a fresh proxy, and the `onMessage` / `onSizeChanged` / `onFallbackRequest` handlers, which are the next slide's subject.
 
 ---
 
@@ -1015,7 +911,7 @@ All three are **function calling**. What changes is who owns the pixels.
 | **Hashbrown** | the same, streamed, plus forms, ... | **you** — your catalog | none — all your code |
 | **MCP UI / MCP Apps** | data **+ a `ui://` resource** | the **server** that owns the tool | crossed → sandbox, host decides |
 
-> And in all three the model **never writes markup**: it picks a tool, you render — with the data for the UI travelling next to the prose for the model.
+> And in all three the model **never writes markup**
 
 Note: this is the map of the whole talk, worth two minutes even if you are running late. Say the first line out loud, because it is what people get wrong: this is not "tool calling vs. something else" — every row is a tool call, the same `functionCall` we saw in the loop, and in row one the component name *is* the tool (one tool per component, back in the Generative UI section). What the tool **returns** is the whole difference. Read the table top to bottom as *the same idea across three trust boundaries*, not as three competing libraries. Rows one and two are the same picture — the model chooses among components you wrote, so fidelity is pixel perfect and there is nothing to isolate; Hashbrown just gives you the Angular ergonomics, streaming and natural-language forms on top. Row three is where the boundary appears: the UI comes from a server you do not control, so it lands in a cross-origin iframe, it can only *ask*, and your host decides. That is the whole reason `ui://`, the sandbox proxy and the `ui/*` messages exist. And the constant in the blockquote is the sentence to leave in the room: no generated markup, ever — a name plus props, or a tool call plus a widget the host chose to mount. Everything else in this talk is plumbing around that.
 

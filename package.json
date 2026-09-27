@@ -10,6 +10,6 @@
     "kill": "fb-slides kill"
   },
   "devDependencies": {
-    "fb-slides": "^0.10.0"
+    "fb-slides": "^0.11.3"
   }
 }
