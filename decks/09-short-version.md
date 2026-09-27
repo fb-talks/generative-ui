@@ -373,7 +373,7 @@ Then land the fragment and move on — do not explain MCP yet. It is only a hook
 
 ## Configure tools (in Gemini SDK)
 
-```ts [1,3,4|5|7-9|10|11-14|18-21]
+```ts [1,3,4|5|7-9|10|14-17]
 const ai = new GoogleGenAI({ apiKey });
 
 const res = await ai.models.generateContent({
@@ -383,12 +383,8 @@ const res = await ai.models.generateContent({
     systemInstruction:
       'You are a UI generator. Call the tools that best answer the request. ' +
       'Call more than one when the request needs more than one component.',
-    tools: [{ functionDeclarations: tools }],
-    toolConfig: {
-      // ANY = the model MUST call a tool. It cannot answer with prose.
-      functionCallingConfig: { mode: FunctionCallingConfigMode.ANY },
-    },
-  },
+    tools: [{ functionDeclarations: tools }]
+  }
 });
 
 // one function call per tool 
@@ -529,6 +525,17 @@ Note: this is the hinge slide into the MCP UI / MCP Apps part. Do not name the l
 
 ---
 
+<!-- demo: https://hashbrown.dev/ -->
+# Hashbrown
+
+**Build agents that run in the browser** — [hashbrown.dev](https://hashbrown.dev)
+
+<div class="mockup-frame">
+  <iframe src="https://hashbrown.dev/" style="width: 100%; max-width: none; height: 360px;" allowfullscreen></iframe>
+</div>
+
+---
+
 ## What it is
 
 - A **client-side** framework for Angular and React: the agent loop runs in the browser
@@ -574,6 +581,37 @@ Note: one object, four keys that matter. `model` is a string — swapping provid
 
 ---
 
+## Sending a message
+
+```ts
+chat.sendMessage({
+  role: 'user', 
+  content: 'Are there available properties in Roma?'
+})
+```
+
+---
+
+## Rendering the conversation
+
+```html [1-2|4-13|10]
+@if (chat.isLoading()) { <app-loader /> }
+@if (chat.error())     { <app-error-alert /> }
+
+@for (message of chat.value(); track $index) {
+  @switch (message.role) {
+    @case ('user') {
+      <p>{{ message.content }}</p>
+    }
+    @case ('assistant') {
+      <hb-render-message [message]="message" />
+    }
+  }
+}
+```
+
+---
+
 ## `exposeComponent` #1: a plain component
 
 <div style="font-size: 0.8em; opacity: 0.75; margin: 0 0 0.4em;">An ordinary Angular component: nothing AI about it</div>
@@ -607,30 +645,6 @@ export const uiSimpleMessageComponent = exposeComponent(
 ```
 
 Note: on top, an ordinary Angular component — nothing AI about it, it existed before. Below, the description the model reads. `description` is the manual; `input` maps one-to-one onto the component's signal inputs. `s.streaming.string` means the text renders token by token as it arrives instead of popping in at the end.
-
----
-
-## Tools: letting the model fetch
-
-```ts [1|2|3|4-7|8-12]
-export const fetchPropertiesTool = createTool({
-  name: 'fetchProperties',
-  description: 'Fetch real estate properties, optionally filtered by city',
-  schema: s.object('Args', {
-    city: s.string(`All the properties filtered by city (e.g. Roma, Milano).
-                    Use empty string for all cities.`),
-  }),
-  handler: async ({ city }) => {
-    const url = `/buildings?city=${city}`;
-    const res = await fetch(url);
-    return await res.json();
-  },
-});
-```
-
-The handler runs **in the browser** — your session, your interceptors, your auth.
-
-Note: this is the difference from a server-side agent. The tool is a normal client function: it can hit your API with the user's cookie, read a signal, open a dialog, navigate the router. No credential ever leaves the browser, and the model never sees the endpoint.
 
 ---
 
@@ -735,6 +749,38 @@ this is the condensed run of the MCP UI section. Everything here comes back in f
 
 ---
 
+## The answer: one protocol in the middle
+
+```mermaid
+flowchart LR
+  A[Claude] --> P((MCP))
+  B[Gemini] --> P
+  C[Visual Studio Code] --> P
+  P --> X1[GitHub]
+  P --> X2[Postgres]
+  P --> X3[Your server]
+```
+
+Every host that speaks MCP can use it.
+
+- open standard, introduced by Anthropic at the end of 2024
+- SDKs in TypeScript, Python, Java, C#, …
+- "the USB-C of AI applications" — the analogy is theirs, and it holds
+
+---
+
+## What a server exposes
+
+| PRIMITIVE | EXAMPLE | WHO DECIDES TO USE IT |
+| --- | --- | --- |
+| **Tools** | `get_weather`, `fetch_data`, ... | the **model** (i.e. Gemini) |
+| **Resources** | a file, a record, `ui://…` | the **host** (i.e. the Client) |
+| **Prompts** | a slash command, a template | the **user**, explicitly |
+
+> Keep **resources** in mind, they come back soon with MCP Apps / MCP UI
+
+---
+
 ## A tool can only answer with text
 
 <div class="cols">
@@ -778,8 +824,6 @@ this is the condensed run of the MCP UI section. Everything here comes back in f
 </div>
 </div>
 
-Note: this is not about looks. A conversation is an extremely narrow interface: every interaction costs a full round trip through the model. Two channels leave together — `content` is written for the model, `structuredContent` for the widget.
-
 ---
 
 ## The idea
@@ -798,6 +842,10 @@ flowchart LR
 The host knows nothing about the widget: it downloads it from the server and runs it **isolated**.
 
 Note: the whole talk is this diagram. The server ships data *and* interface; the host renders something it has never seen, in a sandbox, and the only channel back is `postMessage`.
+
+---
+
+![Host app anatomy: browser window → host app → widget container → AppRenderer proxy layer → sandboxed iframe → widget HTML](assets/mcp_ui_nested_mockup_1788469651956.jpg)
 
 ---
 
