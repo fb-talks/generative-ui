@@ -936,6 +936,50 @@ Same problem, different bets — and **none of them is finished**.
 
 ---
 
+## Demo: _mokup.dev_
+<video src="assets/AI-RealEstate13may.mp4" controls muted playsinline preload="metadata"
+  style="width: 78%; aspect-ratio: 16 / 9;"></video>
+
+---
+
+<!-- demo: https://www.learnbydo.ing/ -->
+
+## Live demo
+
+
+<iframe src="https://www.learnbydo.ing/" style="width:100%;height:60vh"></iframe>
+
+## New slide
+
+---
+
+<!-- demo: https://www.building-ai.app -->
+
+## Live demo
+
+<iframe src="https://www.building-ai.app" style="width:100%;height:60vh"></iframe>
+
+## New slide
+
+---
+
+<div class="cols">
+<div class="col">
+
+<br /><br />
+
 # Thank You!
-* ## _fabiobiondi.dev_
-* ## *learnbydo.ing*
+# _fabiobiondi.dev_
+
+</div>
+<div class="col">
+
+<div style="width: 240px">
+
+![](assets/jsHD2.3-scritta-per-sticker.png)
+
+</div>
+
+
+</div>
+</div>
