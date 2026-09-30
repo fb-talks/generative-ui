@@ -138,6 +138,12 @@ Note: the model does not draw this dashboard — it picks the widgets and the ap
 
 ---
 
+## Demo MCP UI: in chatbot
+
+<video src="assets/demo-video-mcp-jam.mp4" controls muted playsinline preload="metadata" style="width: 62%; aspect-ratio: 1920 / 1292; display: block; margin: 0 auto;"></video>
+
+---
+
 ## One definition, and one anti-definition
 
 > **Generative UI**: the model does not produce the interface. <br /> It produces a **description** of an interface, using components *you* wrote, and your app renders it.
@@ -642,7 +648,7 @@ this is the condensed run of the MCP UI section. Everything here comes back in f
 
 **Today**
 
-```json
+```ts
 {
   "content": [
     {
@@ -869,12 +875,13 @@ const chat = ai.chats.create({
 <div class="col">
 
 ```tsx
-// in a loop 
+// Loop over the tools returned 
+// by the 'chat' after every prompt
 <AppRenderer 
   client={client} 
   toolName={toolData.name}
-  toolInput={toolData.input}     // → toolinput  ①
-  toolResult={toolData.result}   // → toolresult ②
+  toolInput={toolData.input}     // ① toolinput (params) 
+  toolResult={toolData.result}   // ② toolresult (result)
   sandbox={SANDBOX} />
 ```
 
@@ -914,6 +921,18 @@ All three are **function calling**. What changes is who owns the pixels.
 > And in all three the model **never writes markup**
 
 Note: this is the map of the whole talk, worth two minutes even if you are running late. Say the first line out loud, because it is what people get wrong: this is not "tool calling vs. something else" — every row is a tool call, the same `functionCall` we saw in the loop, and in row one the component name *is* the tool (one tool per component, back in the Generative UI section). What the tool **returns** is the whole difference. Read the table top to bottom as *the same idea across three trust boundaries*, not as three competing libraries. Rows one and two are the same picture — the model chooses among components you wrote, so fidelity is pixel perfect and there is nothing to isolate; Hashbrown just gives you the Angular ergonomics, streaming and natural-language forms on top. Row three is where the boundary appears: the UI comes from a server you do not control, so it lands in a cross-origin iframe, it can only *ask*, and your host decides. That is the whole reason `ui://`, the sandbox proxy and the `ui/*` messages exist. And the constant in the blockquote is the sentence to leave in the room: no generated markup, ever — a name plus props, or a tool call plus a widget the host chose to mount. Everything else in this talk is plumbing around that.
+
+---
+
+## Not the only game in town
+
+Same problem, different bets — and **none of them is finished**.
+
+| | who | the bet |
+| --- | --- | --- |
+| **A2UI** <br /> <span style="font-size:0.8em">a2ui.org</span> | Google + CopilotKit | **declarative JSON**, streamed: the agent describes the UI, the host renders it with its **own native components** from a pre-approved catalog — no iframe, no code to execute |
+| **Open UI** <br /> <span style="font-size:0.8em">openui.com</span> | Thesys | same idea in **markup instead of JSON** — fewer tokens, one payload rendered in React, Vue, Svelte, React Native |
+| **AG-UI** <br /> <span style="font-size:0.8em">ag-ui.com</span> | CopilotKit | *not* a UI format: the **channel** — streaming, events, shared state between agent and frontend |
 
 ---
 
