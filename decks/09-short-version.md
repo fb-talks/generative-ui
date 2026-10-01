@@ -130,20 +130,6 @@ Note: this is the single slide that explains the whole idea. Same information, s
 
 ---
 
-## Demo Hashbrown: generated dashboard
-
-<video src="assets/hashbrown/DashboardDemo6.mp4" controls muted playsinline preload="metadata" style="width: 80%; aspect-ratio: 1920 / 1080; display: block; margin: 0 auto;"></video>
-
-Note: the model does not draw this dashboard — it picks the widgets and the app renders them. Same components you already ship, assembled at runtime around the question that was actually asked.
-
----
-
-## Demo MCP UI: in chatbot
-
-<video src="assets/demo-video-mcp-jam.mp4" controls muted playsinline preload="metadata" style="width: 62%; aspect-ratio: 1920 / 1292; display: block; margin: 0 auto;"></video>
-
----
-
 ## One definition, and one anti-definition
 
 > **Generative UI**: the model does not produce the interface. <br /> It produces a **description** of an interface, using components *you* wrote, and your app renders it.
@@ -175,7 +161,7 @@ Prompt: *"who was Ada Lovelace?"*
 **3. Call your functions**: "tools". You describe what your app can do; the model decides *when* to call it. 
 
 ```ts
-tools: [ getSales, findPerson, createTicket ]
+tools: [ SalesReport, PersonCard, CreateTicket, ... ]
 ```
 
 <blockquote class="fragment">Generative UI = <b>#2 and #3</b>, pointed at your component library instead of your database.</blockquote>
@@ -200,10 +186,10 @@ sequenceDiagram
     participant M as Model
     participant S as Your Services
 
-    U->>A: "how are the Product X doing?"
+    U->>A: "how are sales in 2026?"
     A->>M: prompt + tool list + component catalog
-    M->>A: tool call: getSales('product X')
-    A->>S: getSales('product X')
+    M->>A: tool call: SalesReport('2026')
+    A->>S: SalesReport('2026')
     S-->>A: data
     A->>M: tool result
     M-->>A: UI description (JSON)
@@ -306,10 +292,17 @@ const res = await ai.models.generateContent({
 
 ```ts
 // one function call per tool 
-const ui = (res.functionCalls ?? []).map(
-  (call) => ({ component: call.name, props: call.args }) as UISpec,
+const widgets = (res.functionCalls ?? []).map(
+  (call) => ({ component: call.name, props: call.args }) 
 );
-// output: [{ component: 'SalesReport', props: { ... } }, ]
+/*
+[
+  { 
+    component: 'SalesReport', 
+    props: { year: 2025, ... } 
+  }, 
+  // ...
+]
 ```
 <!-- .element: class="fragment" -->
 
@@ -320,17 +313,17 @@ Note: two things to point at. `mode: ANY` is the whole trick — it forbids pros
 ## Client: render components from Catalog
 
 ```tsx
+// Widget Catalog
 const UIKIT = { Alert, UserCard, BarChart, SalesReport };
 
-ui.map((item, i) => {
+// Render components (in React)
+widgets.map((item, i) => {
   const Component = UIKIT[item.component];
   return Component ? <Component key={i} {...node.props} /> : null
 });
 ```
 
 Anything outside the registry simply does not exist. No markup, no `innerHTML`, no exploit.
-
-
 
 Note: the renderer is nine lines and there is no framework in sight — that is the point, and it is worth saying that everything else in this talk is this same idea with more plumbing. The `registry` lookup is the security boundary: it is a whitelist by construction, not a filter someone has to remember to write.
 
@@ -393,6 +386,10 @@ Note: this is the hinge slide into the MCP UI / MCP Apps part. Do not name the l
 
 ---
 
+# HashBrown
+
+---
+
 <!-- demo: https://hashbrown.dev/ -->
 # Hashbrown
 
@@ -416,11 +413,17 @@ Note: the important word is *catalog*. The model never returns markup. It return
 
 ---
 
-## Demo: where we are going
+## Demo: a simple Chat Bot
 
 <video src="assets/hashbrown/ChatDemo-RealEstate.mp4" controls muted playsinline preload="metadata" style="width: 78%; aspect-ratio: 1920 / 1080; display: block; margin: 0 auto;"></video>
 
 Note: thirty seconds, then move on. One input, no filters — the model picks the list, the map and the booking form out of the catalog and fills them. Everything after this slide is how those three components got there. Say out loud that this runs entirely in the browser: no agent on the server.
+
+---
+
+## Demo Hashbrown: generated dashboard
+
+<video src="assets/hashbrown/DashboardDemo6.mp4" controls muted playsinline preload="metadata" style="width: 80%; aspect-ratio: 1920 / 1080; display: block; margin: 0 auto;"></video>
 
 ---
 
@@ -590,6 +593,12 @@ And that is exactly what the rest of the talk is about.
 
 ---
 
+# MCP Apps
+## Load widgets in Angular, React, Vanilla JS, ...
+### ... and  in Claude Desktop, ChatGPT, VSC or any other client that supports MCP Apps
+
+---
+
 # MCP
 
 **Model Context Protocol** — the open standard that lets any AI app use *your* tools and *your* data.
@@ -705,7 +714,13 @@ Note: the whole talk is this diagram. The server ships data *and* interface; the
 
 ---
 
+<!-- disabled -->
+
 ![Host app anatomy: browser window → host app → widget container → AppRenderer proxy layer → sandboxed iframe → widget HTML](assets/mcp_ui_nested_mockup_1788469651956.jpg)
+
+---
+
+![](assets/mockup-1790807244274-1x.png)
 
 ---
 
@@ -714,6 +729,12 @@ Note: the whole talk is this diagram. The server ships data *and* interface; the
 ## MCP Demo
 
 > "immobili a Roma sotto i 500.000 euro"
+
+---
+
+## Demo MCP UI: in chatbot
+
+<video src="assets/demo-video-mcp-jam.mp4" controls muted playsinline preload="metadata" style="width: 62%; aspect-ratio: 1920 / 1292; display: block; margin: 0 auto;"></video>
 
 ---
 
@@ -831,9 +852,7 @@ No DOM, no network, no model: everything the widget wants, it has to request.
 
 ---
 
-# MCP UI: Client 
-## Your App in Angular, React, Vanilla JS, ...
-## or Claude Desktop, ChatGPT or any other client that supports MCP Apps
+# MCP UI: Client
 
 ---
 
