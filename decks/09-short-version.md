@@ -154,11 +154,17 @@ Prompt: *"who was Ada Lovelace?"*
 "Ada Lovelace was a 19th-century mathematician who wrote what is now considered the first algorithm..."
 ```
 
+<div class="fragment">
+
 **2. Generate structured output**: You hand it a **schema**, you get back JSON that fits it. Every time.
 
 ```json
 { "name": "Ada Lovelace", "role": "Mathematician", "skills": ["Analytical Engine", "Algorithms", "Symbolic logic"] }
 ```
+
+</div>
+
+<div class="fragment">
 
 **3. Call your functions**: "tools". You describe what your app can do; the model decides *when* to call it. 
 
@@ -166,11 +172,17 @@ Prompt: *"who was Ada Lovelace?"*
 tools: [ getWeather, getUser, getItem, ... ]
 ```
 
-**4. UI Tools**: "tools". Tools represent your UI
+</div>
+
+<div class="fragment">
+
+**4. UI Tools**: Tools represent your UI
 
 ```ts
 tools: [ SalesReport, PersonCard, CreateTicket, ... ]
 ```
+
+</div>
 
 
 
@@ -186,7 +198,9 @@ On block 3, say that these are ordinary application functions — `fetchSales` i
 
 ---
 
-## The mechanism, in one picture
+<!-- disabled -->
+
+## Function Calling: in one picture
 
 ```mermaid
 sequenceDiagram
@@ -198,8 +212,8 @@ sequenceDiagram
 
     U->>A: "how are sales in 2026?"
     A->>M: prompt + tool list + component catalog
-    M->>A: tool call: SalesReport('2026')
-    A->>S: SalesReport('2026')
+    M->>A: tool call: getSales('2026')
+    A->>S: getSales('2026')
     S-->>A: data
     A->>M: tool result
     M-->>A: UI description (JSON)
@@ -213,7 +227,32 @@ Note: walk it slowly, arrow by arrow. The two things to point at: step 2 (we sen
 
 ---
 
-## Another component... that fetches data
+## How Gen UI works (simplified)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant A as Your App
+    participant M as Model
+    participant S as Your Services
+
+    U->>A: "how are sales in 2026?"
+    A->>M: prompt + tool list + component catalog
+    M-->>A: UI: SalesReport { year: 2026 }
+    A->>S: API: getSales(2026)
+    S-->>A: data
+    A->>A: render with YOUR components
+    A-->>U: a chart, product cards, a form
+```
+
+The model never touches the DOM, the network, or your state.
+
+Note: walk it slowly, arrow by arrow. The two things to point at: step 2 (we send a *catalog*, not a design) and step 3 (the model answers with a component name and its props, not markup).
+
+---
+
+## `SalesReport` component
 
 ```tsx
 <SalesReport year={2025} category="shoes" />
@@ -233,10 +272,6 @@ export async function SalesReport({ year, category = 'all' }: SalesReportProps) 
 }
 ```
 
-
-
-
-
 Note: this is the component the room will remember, so slow down. `UserCard` was handed everything it renders; this one is handed two values and goes to get the rest.
 
 Point at the `await` on the highlighted line and say it out loud: an ordinary **async server component**, the kind you already write in Next.js. No `useEffect`, no loading state, no client fetch — the data is loaded where the component is rendered, with your session and your row-level security, and only HTML crosses to the browser. `fetchSales` is a fake `SELECT` in the demo, but in your app it is the same service your existing dashboard already calls. (Honesty note if someone asks: the demo running later is a plain Vite SPA, so there the same component does the fetch in a `useEffect` — same idea, more ceremony.)
@@ -247,9 +282,8 @@ The reason this matters is not architecture, it is trust. The model has no idea 
 
 ## A tool that describes the question, not the data
 
-```ts [1-2|4|5-10|11-18]
+```ts [1|3|4-9|10-17]
 const tools: FunctionDeclaration[] = [
-  // ... other tools
   {
     name: 'SalesReport',
     description: `
@@ -266,7 +300,9 @@ const tools: FunctionDeclaration[] = [
       },
       required: ['year'],
     },
-  }
+  },
+  // ... other tools
+]
 ```
 
 
@@ -494,7 +530,7 @@ chat.sendMessage({
 
 ---
 
-## `exposeComponent`: a plain component
+## `exposeComponent`: a simple Message component
 
 <div class="cols">
 <div class="col">
@@ -505,7 +541,7 @@ chat.sendMessage({
 @Component({
   selector: 'app-chat-message',
   template: `
-    <div> {{ text() }} </div>
+    <div class="msg"> {{ text() }} </div>
   `,
 })
 export class ChatMessage {
@@ -514,7 +550,7 @@ export class ChatMessage {
 ```
 
 </div>
-<div class="col">
+<div class="col fragment">
 
 <div style="font-size: 0.8em; opacity: 0.75; margin: 0 0 0.4em;">The description the model reads</div>
 
@@ -539,6 +575,8 @@ export const chatMessageDeclaration = exposeComponent(
 Note: on the left, an ordinary Angular component — nothing AI about it, it existed before. On the right, the description the model reads. `description` is the manual; `input` maps one-to-one onto the component's signal inputs. `s.streaming.string` means the text renders token by token as it arrives instead of popping in at the end.
 
 ---
+
+<!-- disabled -->
 
 ## Streaming changes the UX more than you expect
 
@@ -612,7 +650,7 @@ And that is exactly what the rest of the talk is about.
 
 # MCP
 
-**Model Context Protocol** — the open standard that lets any AI app use *your* tools and *your* data.
+**Model Context Protocol**: the open standard that lets any AI app use *your* tools and *your* data.
 
 Note: five minutes, just enough to have the same words. Whoever already writes MCP servers can look at their phone.
 
