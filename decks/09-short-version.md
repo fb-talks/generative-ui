@@ -4,6 +4,8 @@ title: Generative UI — GEN UI TALK
 section: GEN UI TALK
 ---
 
+<!-- separator: TALK VERSION: 30-40 min -->
+
 <div class="cols" style="--cols-align: center">
 <div class="col" >
 
@@ -83,7 +85,7 @@ Note: ask the room: how many screens in your app exist only because of one edge 
 - The user knows what they want: they just can't **say** it to a form
 - Search boxes often return links. Dashboards return everything. Neither returns *an answer*
 
-<p class="fragment">Chat solved the <b>input</b> problem.<br>It gave us back a <b>wall of text</b> as output.</p>
+<p class="fragment">Chat solved the <b>input</b> problem.</p>
 
 Note: this is the setup for the whole talk. Chat was a huge UX regression in one specific way: we replaced rich, clickable, scannable interfaces with a paragraph. Generative UI is the attempt to get the interface back without going back to the static screen.
 
@@ -96,7 +98,7 @@ Note: this is the setup for the whole talk. Chat was a huge UX regression in one
     <p><strong>What the model says</strong></p>
     <blockquote>Running shoes made €6,700 this month, up 12% on last month. Week one was €1,200, week two €1,810, week three €1,640 and week four €2,050. Your last order, A-99213, was delivered on the 14th.</blockquote>
   </div>
-  <div style="flex: 1;">
+  <div class="fragment" style="flex: 1;">
     <p><strong>What the user would like</strong></p>
     <div style="padding: 1em 1.2em; border: 1px solid rgba(148, 163, 184, 0.4); border-radius: 8px;">
       <div style="font-size: 0.75em; opacity: 0.75;">Running shoes — revenue, by week</div>
@@ -161,10 +163,18 @@ Prompt: *"who was Ada Lovelace?"*
 **3. Call your functions**: "tools". You describe what your app can do; the model decides *when* to call it. 
 
 ```ts
+tools: [ getWeather, getUser, getItem, ... ]
+```
+
+**4. UI Tools**: "tools". Tools represent your UI
+
+```ts
 tools: [ SalesReport, PersonCard, CreateTicket, ... ]
 ```
 
-<blockquote class="fragment">Generative UI = <b>#2 and #3</b>, pointed at your component library instead of your database.</blockquote>
+
+
+<blockquote class="fragment">Generative UI = <b>#4</b>, pointed at your component library instead of your database.</blockquote>
 
 Note: 60-second primer, because everything after this builds on it. Do not rush this slide — if they miss "structured output", nothing later makes sense. The analogy that works: structured output is a TypeScript interface the model is forced to satisfy.
 
@@ -387,6 +397,7 @@ Note: this is the hinge slide into the MCP UI / MCP Apps part. Do not name the l
 ---
 
 # HashBrown
+## A client side approach for Angular and React
 
 ---
 
@@ -483,7 +494,7 @@ chat.sendMessage({
 
 ---
 
-## `exposeComponent` #1: a plain component
+## `exposeComponent`: a plain component
 
 <div class="cols">
 <div class="col">
@@ -607,7 +618,7 @@ Note: five minutes, just enough to have the same words. Whoever already writes M
 
 ---
 
-## The answer: one protocol in the middle
+## MCP: one protocol in the middle
 
 ```mermaid
 flowchart LR
@@ -800,7 +811,7 @@ Note: three steps, three MCP primitives, nothing invented.
 
 ---
 
-## The widget: an ordinary HTML file
+## The widget: an ordinary HTML file (`hello-widget.html`)
 
 No build, no framework, no bundler.
 
