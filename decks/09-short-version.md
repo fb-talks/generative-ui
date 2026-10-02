@@ -85,7 +85,7 @@ Note: ask the room: how many screens in your app exist only because of one edge 
 - The user knows what they want: they just can't **say** it to a form
 - Search boxes often return links. Dashboards return everything. Neither returns *an answer*
 
-<p class="fragment">Chat solved the <b>input</b> problem.</p>
+<blockquote class="fragment">Chat solved the <b>input</b> problem.</blockquote>
 
 Note: this is the setup for the whole talk. Chat was a huge UX regression in one specific way: we replaced rich, clickable, scannable interfaces with a paragraph. Generative UI is the attempt to get the interface back without going back to the static screen.
 
@@ -95,7 +95,7 @@ Note: this is the setup for the whole talk. Chat was a huge UX regression in one
 
 <div style="display: flex; gap: 2.5rem; align-items: flex-start;">
   <div style="flex: 1;">
-    <p><strong>What the model says</strong></p>
+    <p><strong>What the model answers:</strong></p>
     <blockquote>Running shoes made €6,700 this month, up 12% on last month. Week one was €1,200, week two €1,810, week three €1,640 and week four €2,050. Your last order, A-99213, was delivered on the 14th.</blockquote>
   </div>
   <div class="fragment" style="flex: 1;">
@@ -136,7 +136,7 @@ Note: this is the single slide that explains the whole idea. Same information, s
 
 > **Generative UI**: the model does not produce the interface. <br /> It produces a **description** of an interface, using components *you* wrote, and your app renders it.
 
-<blockquote class="fragment"><b>It is <i>not</i>:</b> an LLM emitting raw HTML/CSS/JS that you <code>innerHTML</code> into the page.<br>That is a security incident with a nice demo.</blockquote>
+<blockquote class="fragment"><b>It is <i>not</i>:</b> an LLM emitting raw HTML/CSS/JS that you <code>innerHTML</code> into the page.<br>That is a security problem</blockquote>
 
 <p class="fragment" style="text-align: center;"><b>The model picks from a menu. It does not cook.</b></p>
 
@@ -169,14 +169,14 @@ Prompt: *"who was Ada Lovelace?"*
 **3. Call your functions**: "tools". You describe what your app can do; the model decides *when* to call it. 
 
 ```ts
-tools: [ getWeather, getUser, getItem, ... ]
+tools: [ getWeather, getPerson, getItem, ... ]
 ```
 
 </div>
 
 <div class="fragment">
 
-**4. UI Tools**: Tools represent your UI
+**4. UI Tools**: Tools can also represent your UI Components
 
 ```ts
 tools: [ SalesReport, PersonCard, CreateTicket, ... ]
@@ -238,7 +238,7 @@ sequenceDiagram
     participant S as Your Services
 
     U->>A: "how are sales in 2026?"
-    A->>M: prompt + tool list + component catalog
+    A->>M: prompt + tools(component catalog)
     M-->>A: UI: SalesReport { year: 2026 }
     A->>S: API: getSales(2026)
     S-->>A: data
@@ -246,7 +246,7 @@ sequenceDiagram
     A-->>U: a chart, product cards, a form
 ```
 
-The model never touches the DOM, the network, or your state.
+The model **never touches** the _DOM_, the _Network_, or _your state_.
 
 Note: walk it slowly, arrow by arrow. The two things to point at: step 2 (we send a *catalog*, not a design) and step 3 (the model answers with a component name and its props, not markup).
 
@@ -282,15 +282,14 @@ The reason this matters is not architecture, it is trust. The model has no idea 
 
 ## A tool that describes the question, not the data
 
-```ts [1|3|4-9|10-17]
+```ts [1|3|4-8|9-16|18|1]
 const tools: FunctionDeclaration[] = [
   {
     name: 'SalesReport',
     description: `
-      Total sales / revenue for one calendar year, broken down by month. Use it whenever 
-      the user asks about sales, revenue or turnover of a given year. Send ONLY the year 
-      (and the category, if the user named one): the component queries the database 
-      itself. Never put sales figures in a BarChart — you do not have them.
+      Total sales / revenue for one calendar year. 
+      Use it whenever the user asks about sales, revenue or turnover of a given year.
+      Send ONLY the year (and the category, if the user named one): the component queries the database itself. 
     `,
     parameters: {
       type: Type.OBJECT,
@@ -420,7 +419,7 @@ Con la UI generata a runtime non hai niente da mostrare: quella schermata è esi
 
 | **CLIENT: inside your app** | **SERVER: from a remote server** |
 | --- | --- |
-| 1. the model _composes_ **your own** components | 1. a third party _ships the data_ **and** _its UI_, in a sandbox |
+| 1. the model _decides_ and  _composes_ **your UI (data only)**  | 1. a third party _ships the data_ **and** _its UI_, in a sandbox |
 | 2. full design-system fidelity | 2. the server team owns its own UX |
 | 3. you own your state, UI, your tests | 3. isolation, trust and consent become **protocol** problems |
 | 4. you control everything | 4. interop: any host |
@@ -450,7 +449,7 @@ Note: this is the hinge slide into the MCP UI / MCP Apps part. Do not name the l
 
 ## What it is
 
-- A **client-side** framework for Angular and React: the agent loop runs in the browser
+- A **client-side** framework for Angular and React
 - The model does not emit HTML: it picks from a **catalog of your components** and fills their inputs
 - Provider-agnostic: OpenAI, Google, Anthropic, Writer, Ollama, Azure
 - _Angular_: signal-based - _React_: hooks
@@ -460,9 +459,9 @@ Note: the important word is *catalog*. The model never returns markup. It return
 
 ---
 
-## Demo: a simple Chat Bot
+## Demo Hashbrown: a simple Chat Bot
 
-<video src="assets/hashbrown/ChatDemo-RealEstate.mp4" controls muted playsinline preload="metadata" style="width: 78%; aspect-ratio: 1920 / 1080; display: block; margin: 0 auto;"></video>
+<video src="assets/hashbrown/ChatDemo-RealEstate.mp4" controls muted playsinline preload="metadata" style="width: 85%; aspect-ratio: 1920 / 1080; display: block; margin: 0 auto;"></video>
 
 Note: thirty seconds, then move on. One input, no filters — the model picks the list, the map and the booking form out of the catalog and fills them. Everything after this slide is how those three components got there. Say out loud that this runs entirely in the browser: no agent on the server.
 
@@ -558,8 +557,7 @@ export class ChatMessage {
 export const chatMessageDeclaration = exposeComponent(
   ChatMessage,
   {
-    description:
-      `Display a simple text response to the user`,
+    description: `Display a simple text response to the user`,
     input: {
       text: s.string('The msg to display'),
       // or 
@@ -626,6 +624,7 @@ Note: concrete war story here: the first version I built waited for the full JSO
 ---
 
 ## Where Hashbrown fits
+Hashbrown is a good choice _when you own every component on screen_. 
 
 | | |
 | --- | --- |
@@ -635,10 +634,10 @@ Note: concrete war story here: the first version I built waited for the full JSO
 | **server** | a streaming proxy, ~20 lines |
 | **trust boundary** | none crossed — it is all your code |
 
-
-> Hashbrown is the answer _when you own every component on screen_. <br />
+<blockquote class="fragment">
 The moment the UI comes from someone else's server, you need isolation and consent as a protocol. <br/>
 And that is exactly what the rest of the talk is about.
+</blockquote>
 
 ---
 
@@ -810,25 +809,28 @@ Note: spec vs library, like the DOM and jQuery — if mcp-ui disappeared you wou
 
 ---
 
-## The server: three steps, one file
-
-```ts [1-2|4-8|10-12|14-22]
+## MCP UI: Server
+```ts [1-2|4-9|11-14|16-21|22-26]
 const htmlPath = path.join(__dirname, "hello-widget.html");  // a plain .html file
 const htmlString = fs.readFileSync(htmlPath, "utf8");
 
-const helloUI = createUIResource({            // 1. create
-  uri: "ui://fb-server/hello-widget",         //    an address, made up but unique
+// 1. DEFINE THE WIDGET
+const helloUI = createUIResource({                  
+  uri: "ui://fb-server/hello-widget",               //       Define unique address for the resource
   encoding: "text",
-  content: { type: "rawHtml", htmlString },   //    or externalUrl: an iframe URL
+  content: { type: "rawHtml", htmlString },         //       The HTML/JS of the widget
 });
 
+// 2. PUBLISH THE WIDGET
 registerAppResource(server, "hello_world_ui", helloUI.resource.uri, {},
-  async () => ({ contents: [helloUI.resource] }),   // 2. publish it for resources/read
+  async () => ({ contents: [helloUI.resource] }),   
 );
 
-registerAppTool(server, "hello_world", {      // 3. bind + answer
-  inputSchema: { name: z.string().optional() },
-  _meta: { ui: { resourceUri: helloUI.resource.uri } },   // ← the same address
+// 3. CONNECT THE TOOL
+registerAppTool(server, "hello_world", {     
+  description: "Shows a Hello world widget. Call it when the user wants to greet someone: render the widget, don't reply in text.",         
+  inputSchema: { name: z.string().optional().describe("Name to greet") },
+  _meta: { ui: { resourceUri: helloUI.resource.uri } },    // ← the same address of the resource
 },
   async ({ name }) => ({
     content: [{ type: "text", text: `Hello ${name}.` }],   // ← for the model
@@ -837,15 +839,13 @@ registerAppTool(server, "hello_world", {      // 3. bind + answer
 );
 ```
 
-**Only the URI binds** — and it has to match, character for character, in both places.
-
 Note: three steps, three MCP primitives, nothing invented.
 
- **1. Create** — wrap the HTML in a UI resource and give it an address: `ui://` is enforced, the rest is a made-up unique string. 
+ **1. Define the widget** — declare what it is (the HTML) and where to find it (an address): `ui://` is enforced, the rest is a made-up unique string. 
 
-**2. Publish** — register that resource on the server so the host can fetch the HTML with `resources/read`. This is the one people forget: without it the tool answers fine but the widget never appears.
+**2. Publish the widget** — register that resource on the server so the host can fetch the HTML with `resources/read`. This is the one people forget: without it the tool answers fine but the widget never appears.
 
- **3. Bind + answer** — register the tool, point `_meta.ui.resourceUri` at the same address so the host knows which widget to mount, and return two channels: `content` for the model, `structuredContent` for the widget. A host that ignores `_meta` still gets the text — you are adding a layer, not breaking compatibility.
+ **3. Connect the tool** — register the tool with a `description`: it is the only thing the model reads to decide *when* to call it, so write it as an instruction ("call it when…", "don't answer in text") — a vague one and the widget never shows up, because the model just replies in text. Then point `_meta.ui.resourceUri` at the same address so the host knows which widget to mount, and return two channels: `content` for the model, `structuredContent` for the widget. A host that ignores `_meta` still gets the text — you are adding a layer, not breaking compatibility.
 
 ---
 
