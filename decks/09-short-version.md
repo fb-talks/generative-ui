@@ -94,7 +94,7 @@ Note: this is the setup for the whole talk. Chat was a huge UX regression in one
 ## ... but "text" is a terrible output format
 
 <div style="display: flex; gap: 2.5rem; align-items: flex-start;">
-  <div style="flex: 1;">
+  <div style="flex: 1;" class="fragment" >
     <p><strong>What the model answers:</strong></p>
     <blockquote>Running shoes made €6,700 this month, up 12% on last month. Week one was €1,200, week two €1,810, week three €1,640 and week four €2,050. Your last order, A-99213, was delivered on the 14th.</blockquote>
   </div>
@@ -144,7 +144,7 @@ Note: "the model picks from a menu, it does not cook" — this is the line I wan
 
 ---
 
-## Three things an LLM can do for you
+## Four things an LLM can do for you
 
 Prompt: *"who was Ada Lovelace?"*
 
@@ -169,7 +169,7 @@ Prompt: *"who was Ada Lovelace?"*
 **3. Call your functions**: "tools". You describe what your app can do; the model decides *when* to call it. 
 
 ```ts
-tools: [ getWeather, getPerson, getItem, ... ]
+tools: [ getWeather, getPerson, getItem, openDoors... ]
 ```
 
 </div>
