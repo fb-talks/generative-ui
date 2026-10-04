@@ -86,6 +86,10 @@ Note: the whole talk is this diagram. The server ships data *and* interface; the
 
 ---
 
+![](assets/mockup-1790807244274-1x.png)
+
+---
+
 <!-- demo: http://localhost:5173/#/ -->
 
 ## MCP Demo
@@ -117,25 +121,28 @@ Note: spec vs library, like the DOM and jQuery — if mcp-ui disappeared you wou
 
 ---
 
-## The server: three steps, one file
-
-```ts [1-2|4-8|10-12|14-22]
+## MCP UI: Server
+```ts [1-2|4-9|11-14|16-21|22-26]
 const htmlPath = path.join(__dirname, "hello-widget.html");  // a plain .html file
 const htmlString = fs.readFileSync(htmlPath, "utf8");
 
-const helloUI = createUIResource({            // 1. create
-  uri: "ui://fb-server/hello-widget",         //    an address, made up but unique
+// 1. DEFINE THE WIDGET
+const helloUI = createUIResource({                  
+  uri: "ui://fb-server/hello-widget",               //       Define unique address for the resource
   encoding: "text",
-  content: { type: "rawHtml", htmlString },   //    or externalUrl: an iframe URL
+  content: { type: "rawHtml", htmlString },         //       The HTML/JS of the widget
 });
 
+// 2. PUBLISH THE WIDGET
 registerAppResource(server, "hello_world_ui", helloUI.resource.uri, {},
-  async () => ({ contents: [helloUI.resource] }),   // 2. publish it for resources/read
+  async () => ({ contents: [helloUI.resource] }),   
 );
 
-registerAppTool(server, "hello_world", {      // 3. bind + answer
-  inputSchema: { name: z.string().optional() },
-  _meta: { ui: { resourceUri: helloUI.resource.uri } },   // ← the same address
+// 3. CONNECT THE TOOL
+registerAppTool(server, "hello_world", {     
+  description: "Shows a Hello world widget. Call it when the user wants to greet someone: render the widget, don't reply in text.",         
+  inputSchema: { name: z.string().optional().describe("Name to greet") },
+  _meta: { ui: { resourceUri: helloUI.resource.uri } },    // ← the same address of the resource
 },
   async ({ name }) => ({
     content: [{ type: "text", text: `Hello ${name}.` }],   // ← for the model
@@ -144,19 +151,17 @@ registerAppTool(server, "hello_world", {      // 3. bind + answer
 );
 ```
 
-**Only the URI binds** — and it has to match, character for character, in both places.
-
 Note: three steps, three MCP primitives, nothing invented.
 
- **1. Create** — wrap the HTML in a UI resource and give it an address: `ui://` is enforced, the rest is a made-up unique string. 
+ **1. Define the widget** — declare what it is (the HTML) and where to find it (an address): `ui://` is enforced, the rest is a made-up unique string. 
 
-**2. Publish** — register that resource on the server so the host can fetch the HTML with `resources/read`. This is the one people forget: without it the tool answers fine but the widget never appears.
+**2. Publish the widget** — register that resource on the server so the host can fetch the HTML with `resources/read`. This is the one people forget: without it the tool answers fine but the widget never appears.
 
- **3. Bind + answer** — register the tool, point `_meta.ui.resourceUri` at the same address so the host knows which widget to mount, and return two channels: `content` for the model, `structuredContent` for the widget. A host that ignores `_meta` still gets the text — you are adding a layer, not breaking compatibility.
+ **3. Connect the tool** — register the tool with a `description`: it is the only thing the model reads to decide *when* to call it, so write it as an instruction ("call it when…", "don't answer in text") — a vague one and the widget never shows up, because the model just replies in text. Then point `_meta.ui.resourceUri` at the same address so the host knows which widget to mount, and return two channels: `content` for the model, `structuredContent` for the widget. A host that ignores `_meta` still gets the text — you are adding a layer, not breaking compatibility.
 
 ---
 
-## The widget: an ordinary HTML file
+## The widget: an ordinary HTML file (`hello-widget.html`)
 
 No build, no framework, no bundler.
 
@@ -285,22 +290,27 @@ Note:
 <div class="col">
 
 ```tsx
-const SANDBOX = { 
-  url: new URL("http://localhost:3010/sandbox_proxy.html") 
-};
-
+// Loop over the tools returned 
+// by the 'chat' after every prompt
 <AppRenderer 
   client={client} 
   toolName={toolData.name}
-  toolInput={toolData.input}     // → toolinput  ①
-  toolResult={toolData.result}   // → toolresult ②
+  toolInput={toolData.input}     // ① toolinput (params) 
+  toolResult={toolData.result}   // ② toolresult (result)
   sandbox={SANDBOX} />
+```
+
+
+```tsx
+const SANDBOX = { 
+  url: new URL("http://localhost:3010/sandbox_proxy.html") 
+};
 ```
 
 </div>
 <div class="col">
 
-<img src="assets/mockup-1789000441393-1x.png" alt="Three nested boxes: host app, sandbox iframe, widget" style="width: 230px; display: block; margin: 0 auto;" />
+<img src="assets/mockup-1789000441393-1x.png" alt="Three nested boxes: host app, sandbox iframe, widget" style="width: 100%; display: block; margin: 0 auto;" />
 
 </div>
 </div>
@@ -372,7 +382,7 @@ All three are **function calling**. What changes is who owns the pixels.
 | **Hashbrown** | the same, streamed, plus forms, ... | **you** — your catalog | none — all your code |
 | **MCP UI / MCP Apps** | data **+ a `ui://` resource** | the **server** that owns the tool | crossed → sandbox, host decides |
 
-> And in all three the model **never writes markup**: it picks a tool, you render — with the data for the UI travelling next to the prose for the model.
+> And in all three the model **never writes markup**
 
 Note: this is the map of the whole talk, worth two minutes even if you are running late. Say the first line out loud, because it is what people get wrong: this is not "tool calling vs. something else" — every row is a tool call, the same `functionCall` we saw in the loop, and in row one the component name *is* the tool (one tool per component, back in the Generative UI section). What the tool **returns** is the whole difference. Read the table top to bottom as *the same idea across three trust boundaries*, not as three competing libraries. Rows one and two are the same picture — the model chooses among components you wrote, so fidelity is pixel perfect and there is nothing to isolate; Hashbrown just gives you the Angular ergonomics, streaming and natural-language forms on top. Row three is where the boundary appears: the UI comes from a server you do not control, so it lands in a cross-origin iframe, it can only *ask*, and your host decides. That is the whole reason `ui://`, the sandbox proxy and the `ui/*` messages exist. And the constant in the blockquote is the sentence to leave in the room: no generated markup, ever — a name plus props, or a tool call plus a widget the host chose to mount. Everything else in this talk is plumbing around that.
 
@@ -396,6 +406,29 @@ Note: novanta secondi, non un confronto feature-by-feature — il punto è solo 
 
 ---
 
+## Demo: _mokup.dev_
+<video src="assets/AI-RealEstate13may.mp4" controls muted playsinline preload="metadata"
+  style="width: 78%; aspect-ratio: 16 / 9;"></video>
+
+---
+
+<div class="cols">
+<div class="col">
+
+<br /><br />
+
 # Thank You!
-* ## _fabiobiondi.dev_
-* ## *learnbydo.ing*
+# _fabiobiondi.dev_
+
+</div>
+<div class="col">
+
+<div style="width: 240px">
+
+![](assets/jsHD2.3-scritta-per-sticker.png)
+
+</div>
+
+
+</div>
+</div>

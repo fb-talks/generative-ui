@@ -4,9 +4,15 @@ title: What is MCP
 section: MCP
 ---
 
+# MCP Apps
+## Load widgets in Angular, React, Vanilla JS, ...
+### ... and  in Claude Desktop, ChatGPT, VSC or any other client that supports MCP Apps
+
+---
+
 # MCP
 
-**Model Context Protocol** — the open standard that lets any AI app use *your* tools and *your* data.
+**Model Context Protocol**: the open standard that lets any AI app use *your* tools and *your* data.
 
 Note: five minutes, just enough to have the same words. Whoever already writes MCP servers can look at their phone.
 

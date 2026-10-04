@@ -9,7 +9,7 @@ section: Generative UI
 
 > **Generative UI**: the model does not produce the interface. <br /> It produces a **description** of an interface, using components *you* wrote, and your app renders it.
 
-<blockquote class="fragment"><b>It is <i>not</i>:</b> an LLM emitting raw HTML/CSS/JS that you <code>innerHTML</code> into the page.<br>That is a security incident with a nice demo.</blockquote>
+<blockquote class="fragment"><b>It is <i>not</i>:</b> an LLM emitting raw HTML/CSS/JS that you <code>innerHTML</code> into the page.<br>That is a security problem</blockquote>
 
 <p class="fragment" style="text-align: center;"><b>The model picks from a menu. It does not cook.</b></p>
 
@@ -17,7 +17,7 @@ Note: "the model picks from a menu, it does not cook" — this is the line I wan
 
 ---
 
-## Three things an LLM can do for you
+## Four things an LLM can do for you
 
 Prompt: *"who was Ada Lovelace?"*
 
@@ -27,19 +27,39 @@ Prompt: *"who was Ada Lovelace?"*
 "Ada Lovelace was a 19th-century mathematician who wrote what is now considered the first algorithm..."
 ```
 
+<div class="fragment">
+
 **2. Generate structured output**: You hand it a **schema**, you get back JSON that fits it. Every time.
 
 ```json
 { "name": "Ada Lovelace", "role": "Mathematician", "skills": ["Analytical Engine", "Algorithms", "Symbolic logic"] }
 ```
 
+</div>
+
+<div class="fragment">
+
 **3. Call your functions**: "tools". You describe what your app can do; the model decides *when* to call it. 
 
 ```ts
-tools: [ getSales, findPerson, createTicket ]
+tools: [ getWeather, getPerson, getItem, openDoors... ]
 ```
 
-<blockquote class="fragment">Generative UI = <b>#2 and #3</b>, pointed at your component library instead of your database.</blockquote>
+</div>
+
+<div class="fragment">
+
+**4. UI Tools**: Tools can also represent your UI Components
+
+```ts
+tools: [ SalesReport, PersonCard, CreateTicket, ... ]
+```
+
+</div>
+
+
+
+<blockquote class="fragment">Generative UI = <b>#4</b>, pointed at your component library instead of your database.</blockquote>
 
 Note: 60-second primer, because everything after this builds on it. Do not rush this slide — if they miss "structured output", nothing later makes sense. The analogy that works: structured output is a TypeScript interface the model is forced to satisfy.
 
@@ -51,7 +71,7 @@ On block 3, say that these are ordinary application functions — `fetchSales` i
 
 ---
 
-## The mechanism, in one picture
+## Function Calling: in one picture
 
 ```mermaid
 sequenceDiagram
@@ -61,10 +81,10 @@ sequenceDiagram
     participant M as Model
     participant S as Your Services
 
-    U->>A: "how are the Product X doing?"
+    U->>A: "how are sales in 2026?"
     A->>M: prompt + tool list + component catalog
-    M->>A: tool call: getSales('product X')
-    A->>S: getSales('product X')
+    M->>A: tool call: getSales('2026')
+    A->>S: getSales('2026')
     S-->>A: data
     A->>M: tool result
     M-->>A: UI description (JSON)
@@ -75,6 +95,31 @@ sequenceDiagram
 The model never touches the DOM, the network, or your state.
 
 Note: walk it slowly, arrow by arrow. The two things to point at: step 2 (we send a *catalog*, not a design) and step 7 (JSON, not markup).
+
+---
+
+## How Gen UI works (simplified)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant A as Your App
+    participant M as Model
+    participant S as Your Services
+
+    U->>A: "how are sales in 2026?"
+    A->>M: prompt + tools(component catalog)
+    M-->>A: UI: SalesReport { year: 2026 }
+    A->>S: API: getSales(2026)
+    S-->>A: data
+    A->>A: render with YOUR components
+    A-->>U: a chart, product cards, a form
+```
+
+The model **never touches** the _DOM_, the _Network_, or _your state_.
+
+Note: walk it slowly, arrow by arrow. The two things to point at: step 2 (we send a *catalog*, not a design) and step 3 (the model answers with a component name and its props, not markup).
 
 ---
 
@@ -207,16 +252,15 @@ The reason this matters is not architecture, it is trust. The model has no idea 
 
 ## A tool that describes the question, not the data
 
-```ts [1-2|4|5-10|11-18]
+```ts [1|3|4-9|10-17|19|1]
 const tools: FunctionDeclaration[] = [
-  // ... other tools
   {
     name: 'SalesReport',
     description: `
-      Total sales / revenue for one calendar year, broken down by month. Use it whenever 
-      the user asks about sales, revenue or turnover of a given year. Send ONLY the year 
-      (and the category, if the user named one): the component queries the database 
-      itself. Never put sales figures in a BarChart — you do not have them.
+      Total sales / revenue for one calendar year. 
+      Use it whenever the user asks about sales, revenue or turnover of a given year.
+      Send ONLY the year (and the category, if the user named one): the component queries the database itself. 
+      Never put sales figures in a BarChart — you do not have them.
     `,
     parameters: {
       type: Type.OBJECT,
@@ -226,7 +270,9 @@ const tools: FunctionDeclaration[] = [
       },
       required: ['year'],
     },
-  }
+  },
+  // ... other tools
+]
 ```
 
 
@@ -294,7 +340,7 @@ Then land the fragment and move on — do not explain MCP yet. It is only a hook
 
 ## Configure tools (in Gemini SDK)
 
-```ts [1,3,4|5|7-9|10|11-14|18-21]
+```ts [1,3,4|5|7-9|10]
 const ai = new GoogleGenAI({ apiKey });
 
 const res = await ai.models.generateContent({
@@ -304,23 +350,29 @@ const res = await ai.models.generateContent({
     systemInstruction:
       'You are a UI generator. Call the tools that best answer the request. ' +
       'Call more than one when the request needs more than one component.',
-    tools: [{ functionDeclarations: tools }],
-    toolConfig: {
-      // ANY = the model MUST call a tool. It cannot answer with prose.
-      functionCallingConfig: { mode: FunctionCallingConfigMode.ANY },
-    },
-  },
+    tools: [{ functionDeclarations: tools }]
+  }
 });
-
-// one function call per tool 
-const ui = (res.functionCalls ?? []).map(
-  (call) => ({ component: call.name, props: call.args }) as UISpec,
-);
 ```
 
-The model does not return a UI. 
 
-It returns **which of your functions (one or many) to call, and with what arguments**.
+
+```ts
+// one function call per tool 
+const widgets = (res.functionCalls ?? []).map(
+  (call) => ({ component: call.name, props: call.args }) 
+);
+/*
+[
+  { 
+    component: 'SalesReport', 
+    props: { year: 2025, ... } 
+  }, 
+  // ...
+]
+*/
+```
+<!-- .element: class="fragment" -->
 
 Note: two things to point at. `mode: ANY` is the whole trick — it forbids prose, so the answer is always a UI. And `res.functionCalls` is a *list*: this is the jump from "the model picks a component" (level 3) to "the model composes a screen" (level 4) and it costs exactly one line of code. Say that the SDK already validated the arguments against the schema before handing them to me — if the model invents a prop, I never see it.
 
@@ -331,9 +383,11 @@ Note: two things to point at. `mode: ANY` is the whole trick — it forbids pros
 ## Client: render components from Catalog
 
 ```tsx
+// Widget Catalog
 const UIKIT = { Alert, UserCard, BarChart, SalesReport };
 
-ui.map((item, i) => {
+// Render components (in React)
+widgets.map((item, i) => {
   const Component = UIKIT[item.component];
   return Component ? <Component key={i} {...node.props} /> : null
 });
@@ -527,7 +581,7 @@ Note: last one matters most and it is the one people forget: this is a tool for 
 
 | **CLIENT: inside your app** | **SERVER: from a remote server** |
 | --- | --- |
-| 1. the model _composes_ **your own** components | 1. a third party _ships the data_ **and** _its UI_, in a sandbox |
+| 1. the model _decides_ and  _composes_ **your UI (data only)**  | 1. a third party _ships the data_ **and** _its UI_, in a sandbox |
 | 2. full design-system fidelity | 2. the server team owns its own UX |
 | 3. you own your state, UI, your tests | 3. isolation, trust and consent become **protocol** problems |
 | 4. you control everything | 4. interop: any host |

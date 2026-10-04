@@ -275,8 +275,8 @@ Step 3: the tool says **where** its UI lives — and answers.
 registerAppTool(server,
   "hello_world",          // the tool name: what the model calls
   { 
-    description: "Shows a minimal 'Hello world' widget…",
-    inputSchema: { name: z.string().optional() },
+    description: "Shows a Hello world widget. Call it when the user wants to greet someone: render the widget, don't reply in text.",
+    inputSchema: { name: z.string().optional().describe("Name to greet") },
     _meta: { ui: { resourceUri: helloUI.resource.uri } } 
   },   
 
@@ -294,6 +294,7 @@ registerAppTool(server,
 Three different strings, **one** of them does the binding — and **two** answers: prose for the model, data for the widget.
 
 Note:
+- the `description` is the only thing the model reads to decide *when* to call the tool, so write it as an instruction ("call it when…", "don't reply in text") — with a vague one the widget never shows up, because the model just answers in text
 - **only the URI binds**, and it has to appear identical in two places: the address the resource is registered at (previous slide) and `_meta.ui.resourceUri` here. If the two don't match character for character the host finds nothing and silently falls back to text — the most annoying failure mode there is
 - the three strings are **unrelated on purpose**: `"hello_world_ui"` is just the resource label, `"hello_world"` is the tool name the model calls, and the URI is the address. They could be pippo, pluto and topolino — the official ext-apps example pairs `"Weather View"` with `ui://weather/view.html`
 - the handler is an **ordinary tool handler** — nothing UI-specific in it. The two channels leave together and go to different readers: `content` is prose the **model** will read, `structuredContent` is data the **widget** will read. Same call, two audiences
@@ -310,19 +311,19 @@ Note:
 const htmlPath = path.join(__dirname, "hello-widget.html");   // a plain .html file
 const htmlString = fs.readFileSync(htmlPath, "utf8");
 
-const helloUI = createUIResource({            // 1. create
+const helloUI = createUIResource({            // 1. DEFINE THE WIDGET
   uri: "ui://fb-server/hello-widget",         //    the address, made up but unique
   encoding: "text",
   content: { type: "rawHtml", htmlString },
 });
 
 registerAppResource(server, "hello_world_ui", helloUI.resource.uri, {},
-  async () => ({ contents: [helloUI.resource] }),   // 2. publish it for resources/read
+  async () => ({ contents: [helloUI.resource] }),   // 2. PUBLISH THE WIDGET (resources/read)
 );
 
-registerAppTool(server, "hello_world", {      // 3. bind + answer
-  description: "Shows a minimal 'Hello world' widget…",
-  inputSchema: { name: z.string().optional() },
+registerAppTool(server, "hello_world", {      // 3. CONNECT THE TOOL
+  description: "Shows a Hello world widget. Call it when the user wants to greet someone: render the widget, don't reply in text.",
+  inputSchema: { name: z.string().optional().describe("Name to greet") },
   _meta: { ui: { resourceUri: helloUI.resource.uri } },   // ← same address as above
 },
   async ({ name }) => ({

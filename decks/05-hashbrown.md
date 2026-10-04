@@ -4,6 +4,11 @@ title: Hashbrown
 section: Hashbrown
 ---
 
+# HashBrown
+## A client side approach for Angular and React
+
+---
+
 <!-- demo: https://hashbrown.dev/ -->
 # Hashbrown
 
@@ -19,7 +24,7 @@ Note: this is the other half of the "two places the UI can come from" slide. MCP
 
 ## What it is
 
-- A **client-side** framework for Angular and React: the agent loop runs in the browser
+- A **client-side** framework for Angular and React
 - The model does not emit HTML: it picks from a **catalog of your components** and fills their inputs
 - Provider-agnostic: OpenAI, Google, Anthropic, Writer, Ollama, Azure
 - _Angular_: signal-based - _React_: hooks
@@ -29,9 +34,9 @@ Note: the important word is *catalog*. The model never returns markup. It return
 
 ---
 
-## Demo: where we are going
+## Demo Hashbrown: a simple Chat Bot
 
-<video src="assets/hashbrown/ChatDemo-RealEstate.mp4" controls muted playsinline preload="metadata" style="width: 78%; aspect-ratio: 1920 / 1080; display: block; margin: 0 auto;"></video>
+<video src="assets/hashbrown/ChatDemo-RealEstate.mp4" controls muted playsinline preload="metadata" style="width: 85%; aspect-ratio: 1920 / 1080; display: block; margin: 0 auto;"></video>
 
 Note: thirty seconds, then move on. One input, no filters — the model picks the list, the map and the booking form out of the catalog and fills them. Everything after this slide is how those three components got there. Say out loud that this runs entirely in the browser: no agent on the server.
 
@@ -95,7 +100,7 @@ Note: three boxes only, on purpose. Prompt in, JSON out, components rendered. Th
 
 ---
 
-## The chat resource
+## The chat resource (Angular v.22+)
 
 ```ts [2|3|4|5-9|10-14]
 export class App {
@@ -108,9 +113,9 @@ export class App {
       ... instructions here ...
     `,
     components: [
-      Component1Declaration,
-      Component2Declaration,
-      Component3Declaration,
+      googleMapDeclaration,
+      productListDeclaration,
+      chatMessageDeclaration,
     ],
   });
 }
@@ -168,8 +173,8 @@ export class App {
       ... instructions here ...
     `,
     components: [
-      uiSimpleMessageComponent,
-      uiGoogleMapComponent,
+      chatMessageDeclaration,
+      googleMapDeclaration,
       uiBookVisitAndAppointment,
     ],
   });
@@ -182,27 +187,33 @@ Note: this is the security story in one line. There is no "render anything" esca
 
 ---
 
-## `exposeComponent` #1: a plain component
+## `exposeComponent` #1: a simple Message component
+
+<div class="cols">
+<div class="col">
 
 <div style="font-size: 0.8em; opacity: 0.75; margin: 0 0 0.4em;">An ordinary Angular component: nothing AI about it</div>
 
-```ts [1-9]
+```ts 
 @Component({
-  selector: 'app-simple-message',
+  selector: 'app-chat-message',
   template: `
-    <div> {{ text() }} </div>
+    <div class="msg"> {{ text() }} </div>
   `,
 })
-export class SimpleMessage {
+export class ChatMessage {
   text = input.required<string>();
 }
 ```
 
+</div>
+<div class="col fragment">
+
 <div style="font-size: 0.8em; opacity: 0.75; margin: 0 0 0.4em;">The description the model reads</div>
 
-```ts [1-11|6|8]
-export const uiSimpleMessageComponent = exposeComponent(
-  SimpleMessage,
+```ts
+export const chatMessageDeclaration = exposeComponent(
+  ChatMessage,
   {
     description: `Display a simple text response to the user`,
     input: {
@@ -214,7 +225,10 @@ export const uiSimpleMessageComponent = exposeComponent(
 );
 ```
 
-Note: on top, an ordinary Angular component — nothing AI about it, it existed before. Below, the description the model reads. `description` is the manual; `input` maps one-to-one onto the component's signal inputs. `s.streaming.string` means the text renders token by token as it arrives instead of popping in at the end.
+</div>
+</div>
+
+Note: on the left, an ordinary Angular component — nothing AI about it, it existed before. On the right, the description the model reads. `description` is the manual; `input` maps one-to-one onto the component's signal inputs. `s.streaming.string` means the text renders token by token as it arrives instead of popping in at the end.
 
 ---
 
@@ -340,9 +354,9 @@ export class App {
     `,
     tools: [fetchPropertiesTool],
     components: [
-      uiSimpleMessageComponent,
+      chatMessageDeclaration,
       uiPropertiesListComponent,
-      uiGoogleMapComponent,
+      googleMapDeclaration,
       uiBookVisitAndAppointment,
     ],
   });
@@ -572,6 +586,7 @@ Note: this is the punchline of the whole section. The generated part stops at th
 ---
 
 ## Where Hashbrown fits
+Hashbrown is a good choice _when you own every component on screen_. 
 
 | | |
 | --- | --- |
@@ -582,6 +597,7 @@ Note: this is the punchline of the whole section. The generated part stops at th
 | **trust boundary** | none crossed — it is all your code |
 
 
-> Hashbrown is the answer _when you own every component on screen_. <br />
+<blockquote class="fragment">
 The moment the UI comes from someone else's server, you need isolation and consent as a protocol. <br/>
 And that is exactly what the rest of the talk is about.
+</blockquote>

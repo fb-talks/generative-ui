@@ -21,7 +21,7 @@ Note: ask the room: how many screens in your app exist only because of one edge 
 - The user knows what they want: they just can't **say** it to a form
 - Search boxes often return links. Dashboards return everything. Neither returns *an answer*
 
-<p class="fragment">Chat solved the <b>input</b> problem.<br>It gave us back a <b>wall of text</b> as output.</p>
+<blockquote class="fragment">Chat solved the <b>input</b> problem.</blockquote>
 
 Note: this is the setup for the whole talk. Chat was a huge UX regression in one specific way: we replaced rich, clickable, scannable interfaces with a paragraph. Generative UI is the attempt to get the interface back without going back to the static screen.
 
@@ -30,8 +30,8 @@ Note: this is the setup for the whole talk. Chat was a huge UX regression in one
 ## ... but "text" is a terrible output format
 
 <div style="display: flex; gap: 2.5rem; align-items: flex-start;">
-  <div style="flex: 1;">
-    <p><strong>What the model says</strong></p>
+  <div style="flex: 1;" class="fragment" >
+    <p><strong>What the model answers:</strong></p>
     <blockquote>Running shoes made €6,700 this month, up 12% on last month. Week one was €1,200, week two €1,810, week three €1,640 and week four €2,050. Your last order, A-99213, was delivered on the 14th.</blockquote>
   </div>
   <div class="fragment" style="flex: 1;">
