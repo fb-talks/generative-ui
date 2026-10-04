@@ -1,18 +1,14 @@
 ---
 marp: true
-title: MCP UI — short version
-section: MCP UI (short)
+title: MCP UI & MCP Apps
+section: MCP UI
 ---
 
 # MCP UI & MCP Apps
 
 When a tool answers with an **interface** instead of text.
 
-*Short Introduction*
-
-Note: SHORT VERSION
-
-this is the condensed run of the MCP UI section. Everything here comes back in far more detail in the long version — if the slot is generous, skip this and go straight to it. Say the title out loud once: "MCP UI" is both the generic idea and the name of a library, and the next slides untangle the two.
+Note: the title of the talk is also the title of this section — everything up to here was the why, from here it is the how. From tools that answer with text to tools that answer with interfaces. Say the title out loud once: "MCP UI" is both the generic idea and the name of a library, and the next slides untangle the two.
 
 ---
 
@@ -427,7 +423,7 @@ Six lines of Express. The widget writes `import { App } from "http://localhost:3
 Note: ext-apps   È il runtime lato widget di MCP Apps: l'unica cosa che il tuo .html deve avere per essere un widget invece di una pagina qualsiasi. Esporta una classe pubblica,
   App, più una manciata di helper.
 
- Molto più dei 5 metodi in tabella nel deck (decks/07-mcp-ui-basics.md:457). Dalle firme reali in app.d.ts:
+ Molto più dei 5 metodi della tabella "What the widget can ask for". Dalle firme reali in app.d.ts:
 
   - handshake e stato: connect(), getHostCapabilities(), getHostVersion(), getHostContext()
   - in ingresso: eventi toolinput, toolinputpartial (streaming degli argomenti mentre il modello li scrive), toolresult, toolcancelled
@@ -852,31 +848,7 @@ Note: this is today's simplification trade-off. The earlier version used a neste
 - The widget is a **plain HTML file**: no build, no bundler, one imported `App` class
 - The security model is *the widget **asks**, the host **decides***, enforced by a cross-origin sandbox
 
-Note: if there is time left, the long version walks the same ground one step at a time, and then four progressive examples — hello world, a dashboard that negotiates its own size, a list that starts a conversation, and a picker that drives the host app.
-
----
-
-## Demo MCP UI: in chatbot
-
-<video src="assets/demo-video-mcp-jam.mp4" controls muted playsinline autoplay preload="metadata" style="width: 62%; aspect-ratio: 1920 / 1292; display: block; margin: 0 auto;"></video>
-
----
-
-## Recap
-
-Three ways to put a component on screen. All three are **function calling** — what changes is who owns the pixels.
-
-| | **Tool + catalog** | **Hashbrown** | **MCP Apps / mcp-ui** |
-| --- | --- | --- | --- |
-| you write | one `FunctionDeclaration` per component | `exposeComponent()` + `uiChatResource()` | an MCP server: a tool **+** a `ui://` resource |
-| what travels | a component **name** + props | the same, streamed | `structuredContent` **+** the widget's HTML |
-| renders | your components, in your app | your components, in your app | a **cross-origin sandbox iframe** |
-| the UI can | anything — it *is* your code | anything — it *is* your code | only **ask** (`ui/*`) — the host decides |
-| the price | you build every component | your framework's runtime | someone else's design system |
-
-> The model never writes markup — in any of the three. <br /> And the data for the widget always travels **next to** the prose for the model.
-
-Note: la tabella che chiude la sezione. Le prime due colonne sono la stessa immagine — il modello sceglie fra componenti che hai scritto tu, fedeltà pixel perfect, niente da isolare perché non si attraversa nessun confine; Hashbrown ci mette sopra l'ergonomia Angular, lo streaming e i form in linguaggio naturale. La terza colonna è dove compare il confine: la UI arriva da un server che non controlli, quindi finisce in un iframe cross-origin, può solo *chiedere*, e il tuo host decide — ed è tutta lì la ragione per cui esistono `ui://`, il sandbox proxy e i messaggi `ui/*`. La riga da leggere ad alta voce è "the price": non esiste la colonna che vince, esiste quella che stai pagando. Scegli le prime due quando la UI è tua e vuoi il tuo design system; scegli la terza quando la UI è di qualcun altro e vuoi che funzioni in qualsiasi host senza che tu la scriva. E il blockquote è la frase da lasciare nella stanza: in nessuno dei tre casi il modello genera markup.
+Note: next section: four progressive examples — hello world, a dashboard that negotiates its own size, a list that starts a conversation, and a picker that drives the host app.
 
 ---
 
@@ -884,15 +856,19 @@ Note: la tabella che chiude la sezione. Le prime due colonne sono la stessa imma
 
 All three are **function calling**. What changes is who owns the pixels.
 
-| | what the tool returns | who provides the UI | trust boundary |
+| | **Tool + catalog** | **Hashbrown** | **MCP Apps / mcp-ui** |
 | --- | --- | --- | --- |
-| **Tool + catalog** | a component **name** + props | **you** — your catalog | none — all your code |
-| **Hashbrown** | the same, streamed, plus forms, ... | **you** — your catalog | none — all your code |
-| **MCP UI / MCP Apps** | data **+ a `ui://` resource** | the **server** that owns the tool | crossed → sandbox, host decides |
+| you write | one `FunctionDeclaration` per component | `exposeComponent()` + `uiChatResource()` | an MCP server: a tool **+** a `ui://` resource |
+| what the tool returns | a component **name** + props | the same, streamed, plus forms, ... | data (`structuredContent`) **+** a `ui://` resource |
+| who provides the UI | **you**: your catalog, in your app | **you**: your catalog, in your app | the **server** that owns the tool, in a **cross-origin sandbox iframe** |
+| trust boundary | none: all your code | none: all your code | crossed: the UI can only **ask** (`ui/*`), the host decides |
+| the price | you build every component | your framework's runtime | someone else's design system |
 
 > And in all three the model **never writes markup**
 
 Note: this is the map of the whole talk, worth two minutes even if you are running late. Say the first line out loud, because it is what people get wrong: this is not "tool calling vs. something else" — every row is a tool call, the same `functionCall` we saw in the loop, and in row one the component name *is* the tool (one tool per component, back in the Generative UI section). What the tool **returns** is the whole difference. Read the table top to bottom as *the same idea across three trust boundaries*, not as three competing libraries. Rows one and two are the same picture — the model chooses among components you wrote, so fidelity is pixel perfect and there is nothing to isolate; Hashbrown just gives you the Angular ergonomics, streaming and natural-language forms on top. Row three is where the boundary appears: the UI comes from a server you do not control, so it lands in a cross-origin iframe, it can only *ask*, and your host decides. That is the whole reason `ui://`, the sandbox proxy and the `ui/*` messages exist. And the constant in the blockquote is the sentence to leave in the room: no generated markup, ever — a name plus props, or a tool call plus a widget the host chose to mount. Everything else in this talk is plumbing around that.
+
+la tabella che chiude la sezione. Le prime due colonne sono la stessa immagine — il modello sceglie fra componenti che hai scritto tu, fedeltà pixel perfect, niente da isolare perché non si attraversa nessun confine; Hashbrown ci mette sopra l'ergonomia Angular, lo streaming e i form in linguaggio naturale. La terza colonna è dove compare il confine: la UI arriva da un server che non controlli, quindi finisce in un iframe cross-origin, può solo *chiedere*, e il tuo host decide — ed è tutta lì la ragione per cui esistono `ui://`, il sandbox proxy e i messaggi `ui/*`. La riga da leggere ad alta voce è "the price": non esiste la colonna che vince, esiste quella che stai pagando. Scegli le prime due quando la UI è tua e vuoi il tuo design system; scegli la terza quando la UI è di qualcun altro e vuoi che funzioni in qualsiasi host senza che tu la scriva. E il blockquote è la frase da lasciare nella stanza: in nessuno dei tre casi il modello genera markup.
 
 ---
 
