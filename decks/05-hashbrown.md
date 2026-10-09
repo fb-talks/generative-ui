@@ -235,8 +235,8 @@ Note: on the left, an ordinary Angular component — nothing AI about it, it exi
 ## `exposeComponent` #2: A Map component
 
 ```ts [1-2|4|5-8]
-export const uiLeafletComponent = exposeComponent(
-  LeafletComponent,
+export const googleMapDeclaration = exposeComponent(
+  GoogleMapComponent, // <-- the real component
   {
     description: 'Display a map centered on the given coordinates',
     input: {
@@ -257,7 +257,7 @@ Note: this is the part people underestimate. The schema is not validation, it is
 <div style="display: flex; gap: 1.5rem; align-items: flex-start; font-size: 0.8em;">
 <div style="flex: 1; min-width: 0;">
 
-```ts [13-15|4-11|7-9]
+```ts
 @Component({
   selector: 'app-properties-list',
   template: `
@@ -278,7 +278,7 @@ export class PropertiesList {
 </div>
 <div style="flex: 1.1; min-width: 0;">
 
-```ts [3|5-18|13-16]
+```ts 
 export const uiPropertiesListComponent = exposeComponent(
   PropertiesList, {
     description: 'Display a list of real estate properties',
@@ -303,6 +303,9 @@ export const uiPropertiesListComponent = exposeComponent(
 ```
 
 </div>
+
+<!-- .element: class="fragment" -->
+
 </div>
 
 Note: note the `@empty` block. Every exposed component must render half-empty and render zero-results — the model *will* hand you an empty array, and it will hand you a partial object mid-stream. Design for partial is not optional here.
@@ -564,7 +567,11 @@ completion = structuredCompletionResource({
   schema: CONTACT_FORM_SCHEMA,
 });
 
-formData = computed<ContactForm | null>(() => this.completion.value() ?? null);
+// Simplified Version
+formData = computed<(() => this.completion.value());
+
+// Typed version
+// formData = computed<ContactForm | null>(() => this.completion.value() ?? null);
 ```
 
 Note: `input` is a **signal** — when `submittedText` changes the completion re-runs on its own. That is the whole reactivity story: no subscribe, no effect, no manual trigger. And read the three system rules out loud, they are the difference between a demo and something that survives real users.

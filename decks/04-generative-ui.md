@@ -42,7 +42,7 @@ Prompt: *"who was Ada Lovelace?"*
 **3. Call your functions**: "tools". You describe what your app can do; the model decides *when* to call it. 
 
 ```ts
-tools: [ getWeather, getPerson, getItem, openDoors... ]
+tools: [ getWeather, getSales, getProduct, openDoors... ]
 ```
 
 </div>
@@ -82,14 +82,12 @@ sequenceDiagram
     participant S as Your Services
 
     U->>A: "how are sales in 2026?"
-    A->>M: prompt + tool list + component catalog
+    A->>M: prompt + tool list
     M->>A: tool call: getSales('2026')
-    A->>S: getSales('2026')
-    S-->>A: data
-    A->>M: tool result
-    M-->>A: UI description (JSON)
-    A->>A: render with YOUR components
-    A-->>U: a chart, product cards, a form
+    A->>S: API / getSales('2026')
+    S-->>A: result
+    A-->>U: render data or do actions
+
 ```
 
 The model never touches the DOM, the network, or your state.
@@ -110,11 +108,11 @@ sequenceDiagram
 
     U->>A: "how are sales in 2026?"
     A->>M: prompt + tools(component catalog)
-    M-->>A: UI: SalesReport { year: 2026 }
-    A->>S: API: getSales(2026)
-    S-->>A: data
+    M-->>A: JSON to build UI: SalesReport { year: 2026 }
     A->>A: render with YOUR components
     A-->>U: a chart, product cards, a form
+
+
 ```
 
 The model **never touches** the _DOM_, the _Network_, or _your state_.
@@ -585,7 +583,7 @@ Note: last one matters most and it is the one people forget: this is a tool for 
 | 2. full design-system fidelity | 2. the server team owns its own UX |
 | 3. you own your state, UI, your tests | 3. isolation, trust and consent become **protocol** problems |
 | 4. you control everything | 4. interop: any host |
-| GOAL: _"Pixel Perfect"... in your app_ 🥳 | GOAL: _Goog Enough, everywhere_ 😅 |
+| GOAL: Almost _"Pixel Perfect"... in your app_ 🥳 | GOAL: _Goog Enough, everywhere_ 😅 |
 
 <p class="fragment">Same idea, two approaches. The second one is <b> MCP Apps</b>.</p>
 

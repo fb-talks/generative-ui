@@ -124,15 +124,17 @@ How the host and the server talk. Two options:
 
 | | |
 | --- | --- |
-| **stdio** | the server runs on your machine, as a process |
-| **HTTP** | the server lives at a URL |
+| **HTTP** | the server lives at a URL (local or remote): the host connects to it |
+| **stdio** | the host launches the server as a child process and talks over stdin/stdout |
 
-Today: **HTTP**, on `localhost:3010`.
+Today: **HTTP**, on `localhost:[PORT]`.
 
-Note: stdio is the local case — zero config, it is what Claude Desktop does. HTTP is the one that matters here: our host is a browser app, and a widget in an iframe needs an origin. A process has none.
+Note: stdio is the local case — zero config, it is what Claude Desktop does. With stdio there is no network: the host runs the `command` from its config (e.g. `node server.js`) and exchanges JSON-RPC, one message per line, on the process pipes. The server is a normal local program, so it can read files, run commands and so on, with the user's permissions. HTTP is the one that matters here: our host is a browser app, and a widget in an iframe needs an origin. A process has none.
 
 ---
 
 ## So then
 
-The server says what it can do. The model chooses. The host executes and gets back…
+1. The server says what it can do. 
+2. The model chooses. 
+3. The host executes and gets back…

@@ -107,9 +107,8 @@ Note: same layers, seen in a full host application. The numbers walk outside-in:
 | | **MCP Apps** | **mcp-ui** |
 | --- | --- | --- |
 | what it is | the official **spec** | an **implementation**, plus DX |
-| who | `modelcontextprotocol/ext-apps` | community project (idosal) |
+| who | `modelcontextprotocol/ext-apps` | community project |
 | it defines | `ui://`, mimeType, `_meta.ui`, the postMessage protocol | `createUIResource`, `AppRenderer`, the sandbox proxy, adapters |
-| if it vanished | there is no contract left | you rewrite ~200 lines, the contract survives |
 
 They are not alternatives: **mcp-ui speaks MCP Apps**.
 
@@ -121,8 +120,7 @@ They are not alternatives: **mcp-ui speaks MCP Apps**.
 
 <p class="fragment">The widget cannot touch the host's DOM, the host's network, or the model.<br>It only speaks using <code>postMessage</code>.</p>
 
-Note:
-- the sentence to land: spec vs library, like the DOM and jQuery — if mcp-ui disappeared you would rewrite code, not the contract. Interop with another host comes from the spec, never from sharing a dependency
+Note: - the sentence to land: spec vs library, like the DOM and jQuery — if mcp-ui disappeared you would rewrite code, not the contract. Interop with another host comes from the spec, never from sharing a dependency
 - **the naming trap**: "MCP UI" means two things — the generic idea (UI over MCP), which is what the talk title uses, and the `mcp-ui` project, which is what the `package.json` uses. Say it out loud once and nobody gets lost
 - mcp-ui **predates** the standard: it is still self-described as an "experimental community playground for MCP UI ideas", and it used to ship its own postMessage protocol (`ui-lifecycle-iframe-ready` / `render-data` / `ui-action`). That protocol is deprecated today — and it is exactly what the `adapters` option translates (it comes back a few slides from here)
 - **the third player**: OpenAI's Apps SDK, same idea, different wire, ChatGPT only. MCP Apps is the attempt to standardise that ground; the other mcp-ui adapter exists to run those widgets
@@ -365,7 +363,7 @@ Note: four steps, zero hand-rolled routing. Next we open the thing that gets mou
 
 No build, no framework, no bundler.
 
-```html [1|4-5|7|10-11|14]
+```html
 <div class="hw-title" id="hw-title">Hello, world!</div>
 
 <script type="module">
@@ -374,8 +372,10 @@ No build, no framework, no bundler.
 
   const app = new App({ name: "hello-widget", version: "1.0.0" });
 
-  // the model's arguments first, then the server's structuredContent
+
+  // fires first with what the model decided (it arrives while the tool is still running), 
   app.addEventListener("toolinput", (i) => setTitle(i?.arguments?.name));
+  // `toolresult` second with what the server actually returned
   app.addEventListener("toolresult", (r) => setTitle(r?.structuredContent?.name));
 
   // listeners BEFORE connect() — from here on the host pushes the data
@@ -522,7 +522,7 @@ Note: worth saying out loud, because the words collide: **this component is the 
 
 ---
 
-## Use the MCP with Gemini
+## Use the MCP with Gemini SDK
 
 The host: the model decides which tool it should use. Nobody knows in advance which tool will run — or whether one runs at all.
 
@@ -541,8 +541,7 @@ const chat = ai.chats.create({
 
 One line publishes every tool to the model. The line under it is what makes widgets possible at all.
 
-Note:
-- `mcpToTool(client)` reads `tools/list` off the MCP client and turns each `inputSchema` into a function declaration. Add a tool on the server, restart, the model can call it — no mapping table on the host, which is the whole promise of MCP cashed in one line
+Note: - `mcpToTool(client)` reads `tools/list` off the MCP client and turns each `inputSchema` into a function declaration. Add a tool on the server, restart, the model can call it — no mapping table on the host, which is the whole promise of MCP cashed in one line
 - **`automaticFunctionCalling: { disable: true }` is the reason this slide exists.** By default the SDK executes the tool for you, in the background, and hands you back only the final prose. You would never hold the `CallToolResult` — so you could never mount a widget with it. A generative-UI host *has* to run the loop by hand. This is the single line people miss, and the failure is silent: everything works, no widget ever appears
 - Gemini here because the demo uses `@google/genai`, but the shape is identical with any provider's function calling
 - the chat session is cached in a `useRef` and rebuilt only when the API key changes: the conversation must survive re-renders, otherwise the model loses its history at every keystroke
@@ -822,6 +821,8 @@ window.parent.postMessage(
 Note: this is (almost) all of `sandbox_proxy.html` — the minimal version from the official mcpui.dev walkthrough, simplified today from an earlier version with a nested iframe. `@mcp-ui/client` listens for exactly that first `postMessage` (`ui/notifications/sandbox-proxy-ready`) before sending the widget's HTML, with a 10s timeout: if the proxy never sends it, `AppRenderer` errors out with "Timed out waiting for sandbox proxy iframe to be ready" and the widget never loads. `document.write()` replaces the entire document — listeners included — so this minimal version can't receive a second widget in the same iframe.
 
 ---
+
+<!-- disabled -->
 
 ## One proxy, one widget
 
